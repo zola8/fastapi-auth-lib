@@ -1,2 +1,5 @@
-setuptools>=84.0.0
+setuptools>=68.0
 pytest>=9.1.1
+build>=1.5.0
+twine>=7.0.0
+python-json-logger>=4.1.0

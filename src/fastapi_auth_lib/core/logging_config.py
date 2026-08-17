@@ -16,7 +16,7 @@ class LogLevel(StrEnum):
     CRITICAL = "CRITICAL"
 
 
-def configure_logging(log_format: LogFormat, log_level: LogLevel) -> None:
+def configure_logging(log_level: LogLevel = LogLevel.DEBUG, log_format: LogFormat = LogFormat.DEV) -> None:
     dev_formatter = {
         "format": "%(asctime)s | %(levelname)-8s | %(name)s:%(lineno)d | %(message)s",
         "datefmt": "%Y-%m-%d %H:%M:%S",

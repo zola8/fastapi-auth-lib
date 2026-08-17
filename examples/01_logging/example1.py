@@ -1,2 +1,16 @@
+import logging
+
+from fastapi_auth_lib import configure_logging, LogFormat, LogLevel
+
+logger = logging.getLogger(__name__)
+
+configure_logging(log_level=LogLevel.DEBUG, log_format=LogFormat.DEV)
+
 if __name__ == '__main__':
-    pass
+    logger.info("hello info logging!")
+
+    # output without configure_logging:
+    # INFO:__main__:hello info logging!
+
+    # output:
+    # 2026-08-16 18:56:50 | INFO     | __main__:10 | hello info logging!
