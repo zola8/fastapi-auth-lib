@@ -1,28 +1,35 @@
-# fastapi-auth-lib
+# FastAPI Auth Lib
 
-### install dependencies
+**fastapi-auth-lib** is a lightweight authentication and authorization library for FastAPI applications.
+
+Features:
+
+- Easy integration with FastAPI
+- Ready-made components (like Spring Framework)
+
+## Installation
+
+### Prerequisites
+
+- Python 3.12+
+- FastAPI 0.141+
+
+### Install dependencies
 
 ```shell
 pip install -r requirements.txt
 ```
 
+## Examples
 
-### Publish to PyPI
+For examples see: [Examples](examples/README.md)
 
-```shell
-# Build distribution
-python -m build
+## License
 
-# Check package
-twine check dist/*
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-# Upload to TestPyPI first
-twine upload --repository testpypi dist/*
-twine upload --repository testpypi dist/* -u __token__ -p TOKEN
+------
 
-# Upload to PyPI
-# twine upload dist/*
+Made with ❤️ for the FastAPI community
 
-# install from test pypi
-pip install -i https://test.pypi.org/simple/ fastapi-auth-lib==0.1.1
-```
+by Zoltán M © 2026

@@ -1,12 +1,11 @@
 import logging
 
-from fastapi_auth_lib.core import LogFormat
-from fastapi_auth_lib.core import LogLevel
 from fastapi_auth_lib.core import configure_logging
 
 logger = logging.getLogger(__name__)
 
-configure_logging(log_level=LogLevel.DEBUG, log_format=LogFormat.DEV)
+# with default settings
+configure_logging()
 
 if __name__ == '__main__':
     logger.info("hello info logging!")
