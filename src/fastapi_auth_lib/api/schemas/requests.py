@@ -1,16 +1,15 @@
-from typing import Optional, Any
+from typing import Any, Optional
 
-from pydantic import BaseModel, Field, EmailStr, SecretStr, field_validator, model_validator
+from pydantic import BaseModel, EmailStr, Field, SecretStr, field_validator, model_validator
 
-from .constants import (
-    PASSWORD_MIN_LENGTH,
-    PASSWORD_MAX_LENGTH,
-    USERNAME_MIN_LENGTH,
-    USERNAME_MAX_LENGTH,
-    USERNAME_PATTERN
-)
 from fastapi_auth_lib.core.utils import normalize_email, normalize_username
+from .constants import (PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH,
+                        USERNAME_PATTERN)
 
+
+# ---------------------------------------------------------------------------
+# Password, registration -> user profile creation
+# ---------------------------------------------------------------------------
 
 class RegisterWithPasswordRequest(BaseModel):
     """
@@ -33,26 +32,37 @@ class RegisterWithPasswordRequest(BaseModel):
         return normalize_email(value)
 
 
-class LoginWithPasswordRequest(BaseModel):
+class PasswordChangeRequest(BaseModel):
     """
-    Request body for password login.
+    Request body for password change.
     """
 
-    email: EmailStr = Field(
-        description="User email address",
-    )
-
-    password: SecretStr = Field(
+    current_password: SecretStr = Field(
         min_length=1,
         max_length=PASSWORD_MAX_LENGTH,
-        description="Raw password",
     )
 
-    @field_validator("email", mode="before")
-    @classmethod
-    def _normalize_email(cls, value: str) -> str:
-        return normalize_email(value)
+    new_password: SecretStr = Field(
+        min_length=PASSWORD_MIN_LENGTH,
+        max_length=PASSWORD_MAX_LENGTH,
+    )
 
+    @model_validator(mode="after")
+    def validate_new_password_different(self) -> "PasswordChangeRequest":
+        if self.current_password.get_secret_value() == self.new_password.get_secret_value():
+            raise ValueError("new_password must be different from current_password")
+
+        return self
+
+
+class ResetPasswordRequest(BaseModel):
+    # TODO after when password works
+    pass
+
+
+# ---------------------------------------------------------------------------
+# User profile
+# ---------------------------------------------------------------------------
 
 class UserUpdateRequest(BaseModel):
     """
@@ -85,29 +95,6 @@ class UserUpdateRequest(BaseModel):
         return self
 
 
-class PasswordChangeRequest(BaseModel):
-    """
-    Request body for password change.
-    """
-
-    current_password: SecretStr = Field(
-        min_length=1,
-        max_length=PASSWORD_MAX_LENGTH,
-    )
-
-    new_password: SecretStr = Field(
-        min_length=PASSWORD_MIN_LENGTH,
-        max_length=PASSWORD_MAX_LENGTH,
-    )
-
-    @model_validator(mode="after")
-    def validate_new_password_different(self) -> "PasswordChangeRequest":
-        if self.current_password.get_secret_value() == self.new_password.get_secret_value():
-            raise ValueError("new_password must be different from current_password")
-
-        return self
-
-
 class UserSelfDeleteRequest(BaseModel):
     """
     Request body for user self deletion.
@@ -118,3 +105,48 @@ class UserSelfDeleteRequest(BaseModel):
         max_length=PASSWORD_MAX_LENGTH,
         description="Current password for confirmation",
     )
+
+
+# ---------------------------------------------------------------------------
+# Login
+# ---------------------------------------------------------------------------
+
+class LoginWithPasswordRequest(BaseModel):
+    """
+    Request body for password login.
+    """
+
+    email: EmailStr = Field(
+        description="User email address",
+    )
+
+    password: SecretStr = Field(
+        min_length=1,
+        max_length=PASSWORD_MAX_LENGTH,
+        description="Raw password",
+    )
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def _normalize_email(cls, value: str) -> str:
+        return normalize_email(value)
+
+
+# ---------------------------------------------------------------------------
+# Activation tokens
+# ---------------------------------------------------------------------------
+
+class ActivationRequest(BaseModel):
+    # TODO after when password works
+    # TODO + resend activation
+    pass
+
+
+# ---------------------------------------------------------------------------
+# Activation tokens
+# ---------------------------------------------------------------------------
+
+
+class RefreshTokenRequest(BaseModel):
+    # TODO after when password works
+    pass

@@ -1,6 +1,7 @@
 import logging
 
-from src.fastapi_auth_lib import configure_logging, LogFormat
+from fastapi_auth_lib.core import LogFormat
+from fastapi_auth_lib.core import configure_logging
 
 logger = logging.getLogger(__name__)
 

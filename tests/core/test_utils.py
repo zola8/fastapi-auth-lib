@@ -1,6 +1,7 @@
 import pytest
 
-from src.fastapi_auth_lib import normalize_username, normalize_email
+from fastapi_auth_lib.core import normalize_email
+from fastapi_auth_lib.core import normalize_username
 
 
 class TestNormalizeUsername:
