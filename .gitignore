@@ -45,8 +45,10 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+.scripts/
 
 # Environment variables
 .env
 .env.local
 .pypirc
+

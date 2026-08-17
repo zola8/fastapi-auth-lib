@@ -2,14 +2,14 @@ from typing import Optional, Any
 
 from pydantic import BaseModel, Field, EmailStr, SecretStr, field_validator, model_validator
 
-from src.fastapi_auth_lib.api.schemas.constants import (
+from .constants import (
     PASSWORD_MIN_LENGTH,
     PASSWORD_MAX_LENGTH,
     USERNAME_MIN_LENGTH,
     USERNAME_MAX_LENGTH,
     USERNAME_PATTERN
 )
-from src.fastapi_auth_lib.core.utils import normalize_email, normalize_username
+from fastapi_auth_lib.core.utils import normalize_email, normalize_username
 
 
 class RegisterWithPasswordRequest(BaseModel):
