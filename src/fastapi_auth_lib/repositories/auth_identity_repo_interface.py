@@ -32,7 +32,7 @@ class AuthIdentityRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_auth_identity_by_user_id(self, user_id: uuid) -> AuthIdentity:
+    async def get_auth_identity_by_user_id(self, user_id: uuid.UUID) -> AuthIdentity:
         """
         Get the auth identity for a user.
 

@@ -13,7 +13,7 @@ class UserRepository(ABC):
         """
         Create a new user.
 
-        The implementation must generate and assign `user_id` if it is not set.
+        The implementation generates and assigns `user_id`.
 
         Raises:
             DuplicateEntityException: If a user with the same email already exists.
@@ -22,7 +22,7 @@ class UserRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_user_by_id(self, user_id: uuid) -> UserProfile:
+    async def get_user_by_id(self, user_id: uuid.UUID) -> UserProfile:
         """
         Get a user by user_id.
 
@@ -54,7 +54,7 @@ class UserRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def update_user(self, user_id: uuid, user: UserProfile) -> UserProfile:
+    async def update_user(self, user_id: uuid.UUID, user: UserProfile) -> UserProfile:
         """
         Update an existing user.
 
@@ -68,7 +68,7 @@ class UserRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete_user(self, user_id: uuid, hard_delete: bool = False) -> None:
+    async def delete_user(self, user_id: uuid.UUID, hard_delete: bool = False) -> None:
         """
         Delete a user.
 
@@ -79,5 +79,14 @@ class UserRepository(ABC):
 
         Raises:
             EntityNotFoundException: If user does not exist.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_all_users(self) -> list[UserProfile]:
+        """
+        Get all users.
+
+        Returns an empty list if no users exist.
         """
         raise NotImplementedError
