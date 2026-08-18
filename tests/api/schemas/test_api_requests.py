@@ -14,8 +14,7 @@ from fastapi_auth_lib.api.schemas.requests import (
     PasswordChangeRequest,
     UserSelfDeleteRequest,
 )
-
-VALID_EMAIL = "user@example.com"
+from tests.conftest import VALID_EMAIL
 
 
 def valid_new_password() -> str:
