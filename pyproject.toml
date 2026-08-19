@@ -16,3 +16,18 @@ dependencies = []
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--cov=fastapi_auth_lib",
+    "--cov-clear",
+    "--cov-fail-under=80",
+    "--cov-report=term-missing"
+]
+
+pythonpath = "src"
+testpaths = "tests"
+asyncio_mode = "auto"
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
