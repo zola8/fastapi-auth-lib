@@ -1,5 +1,9 @@
 # FastAPI Auth Lib
 
+![Tests](https://github.com/zola8/fastapi-auth-lib/actions/workflows/tests.yml/badge.svg)
+![Python Version](https://img.shields.io/badge/python-3.13-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+
 **fastapi-auth-lib** is a lightweight authentication and authorization library for FastAPI applications.
 
 Features:
