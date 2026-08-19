@@ -10,4 +10,5 @@ email-validator>=2.3.0
 coverage>=7.15.4
 pytest-cov>=7.1.0
 uvicorn>=0.52.3
+sqlalchemy>=2.0.52
 

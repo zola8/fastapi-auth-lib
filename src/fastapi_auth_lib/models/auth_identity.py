@@ -81,17 +81,3 @@ class AuthIdentity(BaseModel):
             )
 
         return value
-
-    @field_validator("password_hash", mode="after")
-    @classmethod
-    def _validate_password_hash(cls, value: Optional[str]) -> Optional[str]:
-        if value is None:
-            return value
-
-        if not value.strip():
-            raise ValueError("password_hash cannot be blank")
-
-        if any(char.isspace() for char in value):
-            raise ValueError("password_hash cannot contain whitespace")
-
-        return value

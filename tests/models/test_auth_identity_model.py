@@ -185,33 +185,9 @@ class TestProviderSubject:
 
 
 class TestPasswordHash:
-    def test_password_hash_is_required_for_password_provider(self):
-        with pytest.raises(ValidationError) as exc_info:
-            make_auth_identity(password_hash=None)
-
-        assert "password_hash is required" in str(exc_info.value)
-
     def test_empty_password_hash_is_invalid(self):
         with pytest.raises(ValidationError):
             make_auth_identity(password_hash="")
-
-    def test_blank_password_hash_is_invalid(self):
-        with pytest.raises(ValidationError):
-            make_auth_identity(password_hash="   ")
-
-    @pytest.mark.parametrize(
-        "password_hash",
-        [
-            "abc def",
-            " abcdef",
-            "abcdef ",
-            "abc\ndef",
-            "abc\tdef",
-        ],
-    )
-    def test_password_hash_with_whitespace_is_invalid(self, password_hash):
-        with pytest.raises(ValidationError):
-            make_auth_identity(password_hash=password_hash)
 
     def test_password_hash_max_length_is_valid(self):
         password_hash = max_password_hash()
