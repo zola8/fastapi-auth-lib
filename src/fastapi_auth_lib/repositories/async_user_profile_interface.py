@@ -5,7 +5,7 @@ from abc import abstractmethod
 from fastapi_auth_lib.models.user import UserProfile
 
 
-class IUserProfileRepository(ABC):
+class IAsyncUserProfileRepository(ABC):
     """Abstract CRUD repository for user profiles."""
 
     @abstractmethod

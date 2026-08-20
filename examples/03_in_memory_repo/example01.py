@@ -2,9 +2,9 @@ import asyncio
 
 from fastapi_auth_lib.core.exceptions import EntityNotFoundException
 from fastapi_auth_lib.models.user import UserProfile
-from fastapi_auth_lib.repositories.memory.user_profile import InMemoryUserProfileRepository
+from fastapi_auth_lib.repositories.memory.async_user_profile import InMemoryAsyncUserProfileRepository
 
-user_repo = InMemoryUserProfileRepository()
+user_repo = InMemoryAsyncUserProfileRepository()
 
 
 async def main():

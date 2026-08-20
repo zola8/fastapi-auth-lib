@@ -8,10 +8,10 @@ from fastapi_auth_lib.core.utils import _now
 from fastapi_auth_lib.models.base import USER_ENTITY
 from fastapi_auth_lib.models.base import UserStatus
 from fastapi_auth_lib.models.user import UserProfile
-from fastapi_auth_lib.repositories.user_profile_interface import IUserProfileRepository
+from fastapi_auth_lib.repositories.async_user_profile_interface import IAsyncUserProfileRepository
 
 
-class InMemoryUserProfileRepository(IUserProfileRepository):
+class InMemoryAsyncUserProfileRepository(IAsyncUserProfileRepository):
     """Own in-memory implementation of UserProfileRepository."""
 
     def __init__(self) -> None:
