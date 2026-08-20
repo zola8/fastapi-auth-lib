@@ -62,3 +62,24 @@ The following example demonstrates basic user management operations using in-mem
 - Auth Method: A user can have only one identity (password)
 - Provider Pattern: AuthProvider enum supports different authentication methods
 - Repository Pattern: Clean data access for both users and credentials
+
+## Example 03 - SQLAlchemy Async Repository Example
+
+**Key Concepts Demonstrated:**
+
+- Async Operations: All database operations are non-blocking using asyncio
+- Session Management: Repository works within an async session scope
+- Repository Pattern: Clean abstraction over SQLAlchemy operations
+- CRUD Operations: Create, Read, Update, Delete (soft)
+- Immutable Fields: Email cannot be changed after creation
+- Role Management: Users can have multiple roles (USER, ADMIN)
+
+## Example 04 - SQLAlchemy Sync Repository with Transaction Example
+
+**Key Concepts Demonstrated:**
+
+- Atomic Transactions: User and identity created together or not at all
+- Session Management: Separate sessions for write and read operations
+- Relationship Mapping: AuthIdentity linked to UserProfile via user_id
+- Sync Operations: Blocking database calls (vs async alternative)
+- Error Recovery: Proper rollback on failure to prevent partial data
