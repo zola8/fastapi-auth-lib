@@ -6,7 +6,7 @@ from fastapi_auth_lib.models.auth_identity import AuthIdentity
 from fastapi_auth_lib.models.base import AuthProvider
 
 
-class AuthIdentityRepository(ABC):
+class IAuthIdentityRepository(ABC):
     """Abstract CRUD repository for authentication identities (one per user)."""
 
     @abstractmethod

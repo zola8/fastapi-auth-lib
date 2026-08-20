@@ -9,10 +9,10 @@ from fastapi_auth_lib.core.utils import _now
 from fastapi_auth_lib.models.auth_identity import AuthIdentity
 from fastapi_auth_lib.models.base import AUTH_IDENTITY_ENTITY
 from fastapi_auth_lib.models.base import AuthProvider
-from fastapi_auth_lib.repositories.auth_identity_repo_interface import AuthIdentityRepository
+from fastapi_auth_lib.repositories.auth_identity_interface import IAuthIdentityRepository
 
 
-class InMemoryAuthIdentityRepository(AuthIdentityRepository):
+class InMemoryAuthIdentityRepository(IAuthIdentityRepository):
     """Own implementation of in-memory AuthIdentityRepository (one identity per user)."""
 
     def __init__(self) -> None:

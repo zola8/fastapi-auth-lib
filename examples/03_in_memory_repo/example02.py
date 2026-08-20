@@ -3,10 +3,10 @@ import asyncio
 from fastapi_auth_lib.models.auth_identity import AuthIdentity
 from fastapi_auth_lib.models.base import AuthProvider
 from fastapi_auth_lib.models.user import UserProfile
-from fastapi_auth_lib.repositories.in_memory.auth_identity import InMemoryAuthIdentityRepository
-from fastapi_auth_lib.repositories.in_memory.user_profile import InMemoryUserRepository
+from fastapi_auth_lib.repositories.memory.auth_identity import InMemoryAuthIdentityRepository
+from fastapi_auth_lib.repositories.memory.user_profile import InMemoryUserProfileRepository
 
-user_repo = InMemoryUserRepository()
+user_repo = InMemoryUserProfileRepository()
 auth_repo = InMemoryAuthIdentityRepository()
 
 
