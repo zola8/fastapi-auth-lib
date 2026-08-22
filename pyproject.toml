@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastapi-auth-lib"
-version = "0.1.4"
+version = "0.1.5"
 description = "Authentication library for FastAPI"
 readme = "README.md"
 license = { text = "MIT" }
@@ -12,20 +12,25 @@ authors = [
     { name = "Zoltán M.", email = "ego.pressure@gmail.com" }
 ]
 requires-python = ">=3.12"
+
 dependencies = [
+    "pydantic>=2.13.4",
+    "fastapi>=0.141.1",
+    "email-validator>=2.3.0",
+    "sqlalchemy>=2.0.52",
+    "python-json-logger>=4.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
     "setuptools>=68.0",
     "build>=1.5.0",
     "twine>=7.0.0",
     "pytest>=9.1.1",
     "pytest-asyncio",
-    "python-json-logger>=4.1.0",
-    "pydantic>=2.13.4",
-    "fastapi>=0.141.1",
-    "email-validator>=2.3.0",
     "coverage>=7.15.4",
     "pytest-cov>=7.1.0",
     "uvicorn>=0.52.3",
-    "sqlalchemy>=2.0.52",
     "aiosqlite>=0.22.1",
 ]
 
