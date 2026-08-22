@@ -1,10 +1,10 @@
 import uvicorn
 from fastapi import FastAPI
 
-from fastapi_auth_lib.api.routers import admin_router
-from fastapi_auth_lib.api.routers import auth_router
-from fastapi_auth_lib.api.routers import user_router
-from fastapi_auth_lib.core import configure_logging
+from fastapi_auth_lib.api.routers.admin import router as admin_router
+from fastapi_auth_lib.api.routers.auth import router as auth_router
+from fastapi_auth_lib.api.routers.users import router as user_router
+from fastapi_auth_lib.core.logging_config import configure_logging
 
 app = FastAPI()
 
