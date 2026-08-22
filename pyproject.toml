@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastapi-auth-lib"
-version = "0.1.5"
+version = "0.1.6"
 description = "Authentication library for FastAPI"
 readme = "README.md"
 license = { text = "MIT" }
