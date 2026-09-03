@@ -26,12 +26,15 @@ class AuthIdentity(BaseModel):
         default=None,
         description="Primary key for auth identity",
     )
+
     user_id: UUID = Field(
         description="References UserProfile.user_id",
     )
+
     provider: AuthProvider = Field(
         description="Authentication provider",
     )
+
     provider_subject: str = Field(
         min_length=1,
         max_length=PROVIDER_SUBJECT_MAX_LENGTH,
@@ -40,6 +43,7 @@ class AuthIdentity(BaseModel):
             "For PASSWORD provider: normalized email."
         ),
     )
+
     password_hash: Optional[str] = Field(
         default=None,
         max_length=PASSWORD_HASH_MAX_LENGTH,
@@ -47,10 +51,12 @@ class AuthIdentity(BaseModel):
         exclude=True,
         description="Salted password hash.",
     )
+
     created_at: datetime = Field(
         default_factory=_now,
         description="Creation timestamp",
     )
+
     updated_at: Optional[datetime] = Field(
         default=None,
         description="Last update timestamp",

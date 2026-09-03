@@ -31,6 +31,12 @@ class UserProfile(BaseModel):
         default=None,
         description="Unique user identifier (UUID)",
     )
+
+    email: EmailStr = Field(
+        max_length=EMAIL_MAX_LENGTH,
+        description="Primary email address (normalized: trimmed, lowercase)",
+    )
+
     username: Optional[str] = Field(
         default=None,
         min_length=USERNAME_MIN_LENGTH,
@@ -38,23 +44,23 @@ class UserProfile(BaseModel):
         pattern=USERNAME_PATTERN,
         description="Display name (whitespace-trimmed)",
     )
-    email: EmailStr = Field(
-        max_length=EMAIL_MAX_LENGTH,
-        description="Primary email address (normalized: trimmed, lowercase)",
-    )
+
     status: UserStatus = Field(
         default=UserStatus.INACTIVE,
         description="Account status",
     )
+
     roles: List[UserRole] = Field(
         default_factory=lambda: [UserRole.USER],
         min_length=1,
         description="User roles",
     )
+
     created_at: datetime = Field(
         default_factory=_now,
         description="Creation timestamp",
     )
+
     updated_at: Optional[datetime] = Field(
         default=None,
         description="Last update timestamp",
