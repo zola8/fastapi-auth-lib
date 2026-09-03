@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fastapi-auth-lib"
+version = "0.1.7"
+description = "Authentication library for FastAPI"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Zoltán M.", email = "ego.pressure@gmail.com" }
+]
+requires-python = ">=3.13"
+
+dependencies = [
+    "pydantic>=2.13.4",
+    "fastapi>=0.141.1",
+    "email-validator>=2.3.0",
+    "sqlalchemy>=2.0.52",
+    "python-json-logger>=4.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "setuptools>=68.0",
+    "build>=1.5.0",
+    "twine>=7.0.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio",
+    "coverage>=7.15.4",
+    "pytest-cov>=7.1.0",
+    "uvicorn>=0.52.3",
+    "aiosqlite>=0.22.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+#addopts = [
+#    "--cov-reset",
+#    "--cov=fastapi_auth_lib",
+#    "--cov-fail-under=80",
+#    "--cov-report=term-missing"
+#]
+
+pythonpath = "src"
+testpaths = "tests"
+asyncio_mode = "auto"
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
