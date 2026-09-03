@@ -15,7 +15,7 @@ Features:
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.13+
 - FastAPI 0.141+
 
 ### Install dependencies

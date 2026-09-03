@@ -14,3 +14,11 @@ class DuplicateEntityException(Exception):
         self.entity_type = entity_type
         self.description = description
         super().__init__(f"{entity_type}: {description}")
+
+
+class AuthenticationException(Exception):
+    """Raised when credentials are invalid during login."""
+
+    def __init__(self, description: str) -> None:
+        self.description = description
+        super().__init__(description)
