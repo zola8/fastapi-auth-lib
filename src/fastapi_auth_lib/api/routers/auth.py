@@ -3,9 +3,7 @@ import logging
 from fastapi import APIRouter
 
 from src.fastapi_auth_lib.api.dependencies import AuthServiceDep
-from src.fastapi_auth_lib.api.schemas.requests import (
-    RegisterWithPasswordRequest,
-)
+from src.fastapi_auth_lib.api.schemas.requests import RegisterWithPasswordRequest
 from src.fastapi_auth_lib.models.user import UserProfile
 
 logger = logging.getLogger(__name__)
