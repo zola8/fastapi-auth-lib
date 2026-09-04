@@ -1,5 +1,6 @@
 import asyncio
 
+from src.fastapi_auth_lib.core.exceptions import AuthenticationException
 from src.fastapi_auth_lib.services.password_hasher.argon2_hasher import Argon2PasswordHasher
 from src.fastapi_auth_lib.services.password_hasher.bcrypt_hasher import BCryptPasswordHasher
 from src.fastapi_auth_lib.services.service_factory import AuthServiceBuilder
@@ -30,8 +31,11 @@ async def main() -> None:
     print(f"Registered (bcrypt): {user3.user_id} | {user3.email}")
 
     # Authenticate
-    authenticated = await service.authenticate("user@email.com", "test123")
-    print(f"Authenticated: {authenticated.email}")
+    try:
+        authenticated = await service.authenticate_with_password("user@email.com", "test123")
+        print(f"Authenticated: {authenticated.email}")
+    except AuthenticationException as e:
+        print(f"Authentication failed: {e}")
 
 
 if __name__ == "__main__":

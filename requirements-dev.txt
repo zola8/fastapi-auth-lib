@@ -6,3 +6,4 @@ pytest-asyncio
 coverage>=7.15.4
 pytest-cov>=7.1.0
 aiosqlite>=0.22.1
+uvicorn>=0.52.4
