@@ -1,0 +1,16 @@
+import logging
+import uuid
+
+from fastapi import APIRouter
+
+from src.fastapi_auth_lib.api.dependencies import UserServiceDep
+from src.fastapi_auth_lib.models.user import UserProfile
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/users", tags=["Users"])
+
+
+@router.get("/{user_id}", response_model=UserProfile)
+async def get_user(user_id: uuid.UUID, service: UserServiceDep):
+    return await service.get_user(user_id)
