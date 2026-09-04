@@ -14,5 +14,5 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/register/password", response_model=UserProfile, status_code=201)
-async def register_with_password(req: RegisterWithPasswordRequest, auth: AuthServiceDep):
-    return await auth.register(email=req.email, password=req.password.get_secret_value())
+async def register_with_password(req: RegisterWithPasswordRequest, auth_service: AuthServiceDep):
+    return await auth_service.register(email=req.email, password=req.password.get_secret_value())

@@ -28,8 +28,12 @@ class AsyncAuthService:
             )
 
         user = await self._user_service.create_user(
-            UserProfile(email=normalized_email)
+            UserProfile(
+                email=normalized_email,
+                username=normalized_email.split("@")[0],
+            )
         )
+
         await self._identity_repo.create_auth_identity(
             AuthIdentity(
                 user_id=user.user_id,

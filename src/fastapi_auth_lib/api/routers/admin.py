@@ -11,5 +11,5 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
 @router.get("", response_model=list[UserProfile])
-async def list_users(service: UserServiceDep):
-    return await service.list_users()
+async def list_users(user_service: UserServiceDep):
+    return await user_service.list_users()

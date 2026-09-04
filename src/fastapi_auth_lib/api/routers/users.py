@@ -12,5 +12,5 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.get("/{user_id}", response_model=UserProfile)
-async def get_user(user_id: uuid.UUID, service: UserServiceDep):
-    return await service.get_user(user_id)
+async def get_user(user_id: uuid.UUID, user_service: UserServiceDep):
+    return await user_service.get_user(user_id)
