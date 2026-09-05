@@ -3,6 +3,7 @@ from datetime import timedelta
 from typing import Callable
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.fastapi_auth_lib.api.exception_handlers import register_exception_handlers
 from src.fastapi_auth_lib.api.routers.admin import router as admin_router
@@ -47,6 +48,20 @@ class AppBuilder:
         self._jwt_config: dict | None = None
         self._sql_mode: bool = False
 
+        # CORS configuration
+        self._cors_enabled: bool = False
+        self._cors_origins: list[str] = [
+            "http://localhost:3000",
+            "http://localhost:8080",
+            "http://localhost:5173",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:8080",
+            "http://127.0.0.1:5173",
+        ]
+        self._cors_credentials: bool = True
+        self._cors_methods: list[str] = ["*"]
+        self._cors_headers: list[str] = ["*"]
+
     # ------------------------------------------------------------------
     # Configuration
     # ------------------------------------------------------------------
@@ -60,6 +75,32 @@ class AppBuilder:
 
     def with_api_prefix(self, prefix: str) -> "AppBuilder":
         self._api_prefix = prefix
+        return self
+
+    # ------------------------------------------------------------------
+    # Middleware
+    # ------------------------------------------------------------------
+    def with_cors(
+        self,
+        origins: list[str] | None = None,
+        allow_credentials: bool = True,
+        allow_methods: list[str] | None = None,
+        allow_headers: list[str] | None = None,
+    ) -> "AppBuilder":
+        """
+        Enable CORS middleware.
+
+        If called without arguments, applies sensible localhost defaults.
+        Pass explicit lists to override for production environments.
+        """
+        self._cors_enabled = True
+        if origins is not None:
+            self._cors_origins = origins
+        if allow_methods is not None:
+            self._cors_methods = allow_methods
+        if allow_headers is not None:
+            self._cors_headers = allow_headers
+        self._cors_credentials = allow_credentials
         return self
 
     # ------------------------------------------------------------------
@@ -131,6 +172,7 @@ class AppBuilder:
             "activation_ttl": activation_ttl,
         }
         return self
+
     # ------------------------------------------------------------------
     # Routers
     # ------------------------------------------------------------------
@@ -156,6 +198,12 @@ class AppBuilder:
             prefix or self._api_prefix,
             ["Admin"],
         ))
+        return self
+
+    def with_all_routers(self) -> "AppBuilder":
+        self.with_auth_router()
+        self.with_users_router()
+        self.with_admin_router()
         return self
 
     def with_router(self, router, prefix: str | None = None) -> "AppBuilder":
@@ -200,6 +248,16 @@ class AppBuilder:
             version=self._version,
             lifespan=self._lifespan,
         )
+
+        # Apply CORS middleware
+        if self._cors_enabled:
+            app.add_middleware(
+                CORSMiddleware,
+                allow_origins=self._cors_origins,
+                allow_credentials=self._cors_credentials,
+                allow_methods=self._cors_methods,
+                allow_headers=self._cors_headers,
+            )
 
         # Store services on app.state
         app.state.user_service = self._user_service
