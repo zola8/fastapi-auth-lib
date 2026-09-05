@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.fastapi_auth_lib.core.database import get_db_session
 from src.fastapi_auth_lib.services.async_auth_service import AsyncAuthService
 from src.fastapi_auth_lib.services.async_user_service import AsyncUserService
+from src.fastapi_auth_lib.services.password_hasher.argon2_hasher import Argon2PasswordHasher
 from src.fastapi_auth_lib.services.service_factory import AuthServiceBuilder
 from src.fastapi_auth_lib.services.service_factory import UserServiceBuilder
 
@@ -31,20 +32,30 @@ async def get_user_service(request: Request, session: SessionDep) -> AsyncUserSe
     return UserServiceBuilder().with_sql_session(session).build()
 
 
+UserServiceDep = Annotated[AsyncUserService, Depends(get_user_service)]
+
+
 async def get_auth_service(
     request: Request,
     session: SessionDep,
-    user_service: Annotated[AsyncUserService, Depends(get_user_service)],
+    user_service: UserServiceDep
 ) -> AsyncAuthService:
     singleton = getattr(request.app.state, "auth_service", None)
     if singleton is not None:
-        return singleton
-    return (
+        return singleton  # in-memory mode
+
+    builder = (
         AuthServiceBuilder()
         .with_user_service(user_service)
         .with_sql_session(session)
-        .build()
+        .with_password_hasher(Argon2PasswordHasher())
     )
+
+    jwt_config = getattr(request.app.state, "jwt_config", None)
+    if jwt_config is not None:
+        builder = builder.with_jwt(**jwt_config)
+
+    return builder.build()
 
 
 # ---------------------------------------------------------------------------
@@ -60,5 +71,4 @@ async def get_current_logged_in_user() -> Optional[str]:
 # Type Aliases for clean routers
 # ---------------------------------------------------------------------------
 AuthServiceDep = Annotated[AsyncAuthService, Depends(get_auth_service)]
-UserServiceDep = Annotated[AsyncUserService, Depends(get_user_service)]
 CurrentLoggedInUserId = Annotated[Optional[str], Depends(get_current_logged_in_user)]

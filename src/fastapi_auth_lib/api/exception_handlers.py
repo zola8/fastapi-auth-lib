@@ -7,6 +7,7 @@ from src.fastapi_auth_lib.api.schemas.responses import ErrorDetail
 from src.fastapi_auth_lib.core.exceptions import AuthenticationException
 from src.fastapi_auth_lib.core.exceptions import DuplicateEntityException
 from src.fastapi_auth_lib.core.exceptions import EntityNotFoundException
+from src.fastapi_auth_lib.core.exceptions import TokenException
 
 
 def register_exception_handlers(app: FastAPI):
@@ -26,6 +27,13 @@ def register_exception_handlers(app: FastAPI):
 
     @app.exception_handler(AuthenticationException)
     async def handle_auth_failed(request: Request, exc: AuthenticationException):
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content=ErrorDetail(description=exc.description).model_dump(),
+        )
+
+    @app.exception_handler(TokenException)
+    async def handle_token(request: Request, exc: TokenException):
         return JSONResponse(
             status_code=status.HTTP_401_UNAUTHORIZED,
             content=ErrorDetail(description=exc.description).model_dump(),

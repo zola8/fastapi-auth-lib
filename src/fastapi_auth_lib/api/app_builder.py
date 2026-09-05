@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from datetime import timedelta
 from typing import Callable
 
 from fastapi import FastAPI
@@ -11,8 +12,12 @@ from src.fastapi_auth_lib.core.database import create_tables
 from src.fastapi_auth_lib.core.database import dispose_engine
 from src.fastapi_auth_lib.services.async_auth_service import AsyncAuthService
 from src.fastapi_auth_lib.services.async_user_service import AsyncUserService
+from src.fastapi_auth_lib.services.password_hasher.plain_text_hasher import PlaintextHasher
 from src.fastapi_auth_lib.services.service_factory import AuthServiceBuilder
 from src.fastapi_auth_lib.services.service_factory import UserServiceBuilder
+from src.fastapi_auth_lib.services.token.jwt_token_service import DEFAULT_ACCESS_TTL
+from src.fastapi_auth_lib.services.token.jwt_token_service import DEFAULT_ACTIVATION_TTL
+from src.fastapi_auth_lib.services.token.jwt_token_service import DEFAULT_REFRESH_TTL
 
 
 class AppBuilder:
@@ -39,6 +44,8 @@ class AppBuilder:
         self._health_check: bool = True
         self._user_service: AsyncUserService | None = None
         self._auth_service: AsyncAuthService | None = None
+        self._jwt_config: dict | None = None
+        self._sql_mode: bool = False
 
     # ------------------------------------------------------------------
     # Configuration
@@ -60,21 +67,20 @@ class AppBuilder:
     # ------------------------------------------------------------------
     def with_in_memory_services(self) -> "AppBuilder":
         """Build and use in-memory services (the default)."""
-        user_service = UserServiceBuilder().build()
-        auth_service = (
-            AuthServiceBuilder()
-            .with_user_service(user_service)
-            .build()
-        )
-        return self.with_services(user_service, auth_service)
+        self._sql_mode = False
+        self._user_service = None
+        self._auth_service = None
+        return self
 
     def with_sql_services(self) -> "AppBuilder":
         """
         SQL mode: services are built per-request from the session dependency.
         app.state services are left as None so dependencies know to build fresh.
         """
+        self._sql_mode = True
         self._user_service = None
         self._auth_service = None
+        # TODO check password hasher with sql?
 
         # Wrap the original lifespan (with create tables + dispose engine)
         original_lifespan = self._lifespan
@@ -103,6 +109,28 @@ class AppBuilder:
         self._auth_service = auth_service
         return self
 
+    # ------------------------------------------------------------------
+    # JWT configuration
+    # ------------------------------------------------------------------
+    def with_jwt(
+        self,
+        secret: str,
+        issuer: str = "fastapi-auth-lib",
+        algorithm: str = "HS256",
+        access_ttl: timedelta = DEFAULT_ACCESS_TTL,
+        refresh_ttl: timedelta = DEFAULT_REFRESH_TTL,
+        activation_ttl: timedelta = DEFAULT_ACTIVATION_TTL,
+    ) -> "AppBuilder":
+        """Enable JWT tokens for the auth service (both in-memory and SQL modes)."""
+        self._jwt_config = {
+            "secret": secret,
+            "issuer": issuer,
+            "algorithm": algorithm,
+            "access_ttl": access_ttl,
+            "refresh_ttl": refresh_ttl,
+            "activation_ttl": activation_ttl,
+        }
+        return self
     # ------------------------------------------------------------------
     # Routers
     # ------------------------------------------------------------------
@@ -154,15 +182,29 @@ class AppBuilder:
     # Build
     # ------------------------------------------------------------------
     def build(self) -> FastAPI:
+        # In-memory: build services now
+        if not self._sql_mode and self._user_service is None:
+            user_service = UserServiceBuilder().build()
+            auth_builder = (
+                AuthServiceBuilder()
+                .with_user_service(user_service)
+                .with_password_hasher(PlaintextHasher())
+            )
+            if self._jwt_config is not None:
+                auth_builder = auth_builder.with_jwt(**self._jwt_config)
+            self._user_service = user_service
+            self._auth_service = auth_builder.build()
+
         app = FastAPI(
             title=self._title,
             version=self._version,
             lifespan=self._lifespan,
         )
 
-        # Store services on app.state (so dependencies can resolve them)
+        # Store services on app.state
         app.state.user_service = self._user_service
         app.state.auth_service = self._auth_service
+        app.state.jwt_config = self._jwt_config
 
         if self._exception_handlers:
             register_exception_handlers(app)
