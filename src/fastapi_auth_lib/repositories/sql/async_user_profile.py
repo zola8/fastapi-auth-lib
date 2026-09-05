@@ -1,8 +1,6 @@
 import uuid
 
-from sqlalchemy import delete
 from sqlalchemy import select
-from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -118,15 +116,17 @@ class SqlAsyncUserProfileRepository(AsyncUserProfileRepository):
         user_id: uuid.UUID,
         hard_delete: bool = False,
     ) -> None:
+        user = await self._session.get(DBUserProfile, user_id)
+        if user is None:
+            return
+
         if hard_delete:
-            stmt = delete(DBUserProfile).where(DBUserProfile.user_id == user_id)
+            await self._session.delete(user)
         else:
-            stmt = (
-                update(DBUserProfile)
-                .where(DBUserProfile.user_id == user_id)
-                .values(status=UserStatus.DELETED, updated_at=_now())
-            )
-        await self._session.execute(stmt)
+            user.status = UserStatus.DELETED
+            user.updated_at = _now()
+
+        await self._session.flush()
 
     async def list_users(self) -> list[UserProfile]:
         stmt = select(DBUserProfile)
