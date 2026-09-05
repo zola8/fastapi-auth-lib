@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.fastapi_auth_lib.core.database import get_db_session
 from src.fastapi_auth_lib.services.async_auth_service import AsyncAuthService
 from src.fastapi_auth_lib.services.async_user_service import AsyncUserService
+from src.fastapi_auth_lib.services.email.email_protocol import EmailServiceProtocol
 from src.fastapi_auth_lib.services.password_hasher.argon2_hasher import Argon2PasswordHasher
 from src.fastapi_auth_lib.services.service_factory import AuthServiceBuilder
 from src.fastapi_auth_lib.services.service_factory import UserServiceBuilder
@@ -58,6 +59,13 @@ async def get_auth_service(
     return builder.build()
 
 
+async def get_email_service(request: Request) -> EmailServiceProtocol | None:
+    """
+    Returns the configured email service, or None if email is disabled.
+    """
+    return getattr(request.app.state, "email_service")
+
+
 # ---------------------------------------------------------------------------
 # Auth dependencies
 # ---------------------------------------------------------------------------
@@ -71,4 +79,5 @@ async def get_current_logged_in_user() -> Optional[str]:
 # Type Aliases for clean routers
 # ---------------------------------------------------------------------------
 AuthServiceDep = Annotated[AsyncAuthService, Depends(get_auth_service)]
+EmailServiceDep = Annotated[EmailServiceProtocol | None, Depends(get_email_service)]
 CurrentLoggedInUserId = Annotated[Optional[str], Depends(get_current_logged_in_user)]

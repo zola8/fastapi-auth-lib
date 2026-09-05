@@ -3,11 +3,14 @@ from uuid import UUID
 from src.fastapi_auth_lib.core.constants import USER_ENTITY
 from src.fastapi_auth_lib.core.exceptions import EntityNotFoundException
 from src.fastapi_auth_lib.models.user import UserProfile
+from src.fastapi_auth_lib.repositories.async_user_profile import AsyncUserProfileRepository
 
 
 class AsyncUserService:
 
-    def __init__(self, user_repo) -> None:
+    def __init__(self,
+                 user_repo: AsyncUserProfileRepository,
+                 ) -> None:
         self._user_repo = user_repo
 
     async def create_user(self, user: UserProfile) -> UserProfile:

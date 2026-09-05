@@ -3,6 +3,9 @@ import os
 import uvicorn
 
 from src.fastapi_auth_lib.core.app_builder import AppBuilder
+from src.fastapi_auth_lib.core.logging_config import configure_logging
+
+configure_logging()
 
 app = (
     AppBuilder()
@@ -14,6 +17,7 @@ app = (
     .with_health_check()
     .with_exception_handlers()
     .with_cors()
+    # .with_dummy_email()
     .build()
 )
 

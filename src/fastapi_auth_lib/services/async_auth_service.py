@@ -7,16 +7,20 @@ from src.fastapi_auth_lib.models.auth_identity import AuthIdentity
 from src.fastapi_auth_lib.models.base import AuthProvider
 from src.fastapi_auth_lib.models.base import UserStatus
 from src.fastapi_auth_lib.models.user import UserProfile
+from src.fastapi_auth_lib.repositories.async_auth_identity import AsyncAuthIdentityRepository
+from src.fastapi_auth_lib.services.async_user_service import AsyncUserService
+from src.fastapi_auth_lib.services.password_hasher.password_hash_protocol import PasswordHasherProtocol
 from src.fastapi_auth_lib.services.token.jwt_token_service import TokenPair
+from src.fastapi_auth_lib.services.token.token_protocol import TokenServiceProtocol
 
 
 class AsyncAuthService:
 
     def __init__(self,
-                 user_service,
-                 identity_repo,
-                 password_hasher,
-                 token_service=None
+                 user_service: AsyncUserService,
+                 identity_repo: AsyncAuthIdentityRepository,
+                 password_hasher: PasswordHasherProtocol | None = None,
+                 token_service: TokenServiceProtocol | None = None,
                  ) -> None:
         self._user_service = user_service
         self._identity_repo = identity_repo

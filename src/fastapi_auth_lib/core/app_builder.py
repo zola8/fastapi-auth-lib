@@ -13,6 +13,8 @@ from src.fastapi_auth_lib.core.database import create_tables
 from src.fastapi_auth_lib.core.database import dispose_engine
 from src.fastapi_auth_lib.services.async_auth_service import AsyncAuthService
 from src.fastapi_auth_lib.services.async_user_service import AsyncUserService
+from src.fastapi_auth_lib.services.email.dummy_logger_email_service import DummyLoggerEmailService
+from src.fastapi_auth_lib.services.email.email_protocol import EmailServiceProtocol
 from src.fastapi_auth_lib.services.password_hasher.plain_text_hasher import PlaintextHasher
 from src.fastapi_auth_lib.services.service_factory import AuthServiceBuilder
 from src.fastapi_auth_lib.services.service_factory import UserServiceBuilder
@@ -47,6 +49,7 @@ class AppBuilder:
         self._auth_service: AsyncAuthService | None = None
         self._jwt_config: dict | None = None
         self._sql_mode: bool = False
+        self._email_service: EmailServiceProtocol | None = None
 
         # CORS configuration
         self._cors_enabled: bool = False
@@ -227,6 +230,20 @@ class AppBuilder:
         return self
 
     # ------------------------------------------------------------------
+    # Email configuration
+    # ------------------------------------------------------------------
+    def with_email_service(self, email_service: EmailServiceProtocol | None) -> "AppBuilder":
+        """
+        Configure the email service.
+        If never called, defaults to DummyLoggerEmailService.
+        """
+        self._email_service = email_service
+        return self
+
+    def with_dummy_email(self) -> "AppBuilder":
+        return self.with_email_service(DummyLoggerEmailService())
+
+    # ------------------------------------------------------------------
     # Build
     # ------------------------------------------------------------------
     def build(self) -> FastAPI:
@@ -263,6 +280,7 @@ class AppBuilder:
         app.state.user_service = self._user_service
         app.state.auth_service = self._auth_service
         app.state.jwt_config = self._jwt_config
+        app.state.email_service = self._email_service
 
         if self._exception_handlers:
             register_exception_handlers(app)

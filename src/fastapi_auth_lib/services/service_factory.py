@@ -9,7 +9,7 @@ from src.fastapi_auth_lib.repositories.sql.async_auth_identity import SqlAsyncAu
 from src.fastapi_auth_lib.repositories.sql.async_user_profile import SqlAsyncUserProfileRepository
 from src.fastapi_auth_lib.services.async_auth_service import AsyncAuthService
 from src.fastapi_auth_lib.services.async_user_service import AsyncUserService
-from src.fastapi_auth_lib.services.password_hasher.protocol import PasswordHasherProtocol
+from src.fastapi_auth_lib.services.password_hasher.password_hash_protocol import PasswordHasherProtocol
 from src.fastapi_auth_lib.services.token.jwt_token_service import DEFAULT_ACCESS_TTL
 from src.fastapi_auth_lib.services.token.jwt_token_service import DEFAULT_ACTIVATION_TTL
 from src.fastapi_auth_lib.services.token.jwt_token_service import DEFAULT_REFRESH_TTL
