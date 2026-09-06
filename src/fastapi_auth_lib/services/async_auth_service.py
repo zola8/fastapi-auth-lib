@@ -121,6 +121,28 @@ class AsyncAuthService:
         logger.debug("user activated: %s", user)
         return user
 
+    async def resend_activation(self, email: str) -> tuple[UserProfile, str] | None:
+        """
+        Returns (user, new_activation_token) if the account exists AND is inactive.
+        Returns None otherwise — the caller must NOT reveal which case occurred.
+        """
+        normalized_email = normalize_email(email)
+
+        identity = await self._identity_repo.find_auth_identity_by_provider_subject(
+            AuthProvider.PASSWORD, normalized_email
+        )
+        if identity is None:
+            logger.debug("user has no identity: %s", normalized_email)
+            return None
+
+        user = await self._user_service.get_user(identity.user_id)
+        if user.status != UserStatus.INACTIVE:
+            logger.debug("user is not inactive, no re-send happens. User: %s", user.email)
+            return None
+
+        new_token = self._require_token_service().create_activation_token(user.user_id)
+        return user, new_token
+
     # ------------------------------------------------------------------
     # Login tokens
     # ------------------------------------------------------------------

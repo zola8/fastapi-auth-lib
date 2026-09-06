@@ -1,4 +1,4 @@
-# Step-by-Step Registration Workflow with Activation
+# Registration with Activation Workflow
 
 **1. User Input (Frontend):** The user enters an email address and a password into the sign-up form.
 

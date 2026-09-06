@@ -47,6 +47,17 @@ class ActivateUserAccountRequest(BaseModel):
     )
 
 
+class ResendActivationRequest(BaseModel):
+    """Request body for resending the activation email."""
+
+    email: EmailStr = Field(description="Registered email address")
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def _normalize_email(cls, value: str) -> str:
+        return normalize_email(value)
+
+
 class RefreshTokenRequest(BaseModel):
     """Request body for refreshing an access token."""
 

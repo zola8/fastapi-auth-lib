@@ -8,9 +8,9 @@ import jwt
 from src.fastapi_auth_lib.core.exceptions import TokenException
 from src.fastapi_auth_lib.core.utils import _now
 
-DEFAULT_ACCESS_TTL = timedelta(minutes=15)
+DEFAULT_ACCESS_TTL = timedelta(minutes=30)
 DEFAULT_REFRESH_TTL = timedelta(days=7)
-DEFAULT_ACTIVATION_TTL = timedelta(hours=24)
+DEFAULT_ACTIVATION_TTL = timedelta(minutes=15)
 
 
 class TokenType(StrEnum):
