@@ -43,7 +43,7 @@ def client(app):
 
 def error_response(description: str):
     """Expected JSON response body."""
-    return {"description": description}
+    return {"error_msg": description}
 
 
 class TestRegisterExceptionHandlers:

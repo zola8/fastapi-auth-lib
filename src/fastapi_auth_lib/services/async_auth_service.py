@@ -1,3 +1,5 @@
+import logging
+
 from src.fastapi_auth_lib.core.constants import AUTH_IDENTITY_ENTITY
 from src.fastapi_auth_lib.core.exceptions import AuthenticationException
 from src.fastapi_auth_lib.core.exceptions import DuplicateEntityException
@@ -12,6 +14,8 @@ from src.fastapi_auth_lib.services.async_user_service import AsyncUserService
 from src.fastapi_auth_lib.services.password_hasher.password_hash_protocol import PasswordHasherProtocol
 from src.fastapi_auth_lib.services.token.jwt_token_service import TokenPair
 from src.fastapi_auth_lib.services.token.token_protocol import TokenServiceProtocol
+
+logger = logging.getLogger(__name__)
 
 
 class AsyncAuthService:
@@ -109,9 +113,13 @@ class AsyncAuthService:
         user_id = self._require_token_service().verify_activation_token(token)
         user = await self._user_service.get_user(user_id)
         if user.status == UserStatus.ACTIVE:
+            logger.debug("user is already active: %s", user)
             return user  # idempotent — link re-clicks are safe
         user.status = UserStatus.ACTIVE
-        return await self._user_service.update_user(user_id, user)
+
+        user = await self._user_service.update_user(user_id, user)
+        logger.debug("user activated: %s", user)
+        return user
 
     # ------------------------------------------------------------------
     # Login tokens

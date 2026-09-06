@@ -1,4 +1,3 @@
-import logging
 from typing import Annotated
 from typing import Optional
 
@@ -13,8 +12,6 @@ from src.fastapi_auth_lib.services.email.email_protocol import EmailServiceProto
 from src.fastapi_auth_lib.services.password_hasher.argon2_hasher import Argon2PasswordHasher
 from src.fastapi_auth_lib.services.service_factory import AuthServiceBuilder
 from src.fastapi_auth_lib.services.service_factory import UserServiceBuilder
-
-logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Service dependencies

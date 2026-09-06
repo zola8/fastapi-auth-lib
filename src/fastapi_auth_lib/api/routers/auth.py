@@ -8,6 +8,7 @@ from src.fastapi_auth_lib.api.schemas.requests import ActivateUserAccountRequest
 from src.fastapi_auth_lib.api.schemas.requests import LoginWithPasswordRequest
 from src.fastapi_auth_lib.api.schemas.requests import RefreshTokenRequest
 from src.fastapi_auth_lib.api.schemas.requests import RegisterWithPasswordRequest
+from src.fastapi_auth_lib.api.schemas.responses import RegisterWithPasswordResponse
 
 logger = logging.getLogger(__name__)
 
@@ -38,16 +39,16 @@ async def register_with_password(
             body=_activation_email_body(user.user_id, activation_token),
         )
 
-    return {
-        "user_id": user.user_id,
-        "email": user.email,
-        "activation_token": activation_token
-    }
+    return RegisterWithPasswordResponse(
+        user_id=user.user_id,
+        email=user.email,
+        activation_token=activation_token,
+    )
 
 
 @router.post("/activate")
-async def activate(req: ActivateUserAccountRequest, auth: AuthServiceDep):
-    user = await auth.activate_account(req.token)
+async def activate(req: ActivateUserAccountRequest, auth_service: AuthServiceDep):
+    user = await auth_service.activate_account(req.token)
     return {
         "user_id": user.user_id,
         "status": user.status
@@ -55,9 +56,9 @@ async def activate(req: ActivateUserAccountRequest, auth: AuthServiceDep):
 
 
 @router.post("/login/password")
-async def login(req: LoginWithPasswordRequest, auth: AuthServiceDep):
-    user = await auth.authenticate_with_password(req.email, req.password.get_secret_value())
-    tokens = auth.create_token_pair(user)
+async def login(req: LoginWithPasswordRequest, auth_service: AuthServiceDep):
+    user = await auth_service.authenticate_with_password(req.email, req.password.get_secret_value())
+    tokens = auth_service.create_token_pair(user)
     return {
         "access_token": tokens.access_token,
         "refresh_token": tokens.refresh_token
@@ -65,8 +66,8 @@ async def login(req: LoginWithPasswordRequest, auth: AuthServiceDep):
 
 
 @router.post("/refresh")
-async def refresh(req: RefreshTokenRequest, auth: AuthServiceDep):
-    tokens = await auth.refresh_access_token(req.refresh_token)
+async def refresh(req: RefreshTokenRequest, auth_service: AuthServiceDep):
+    tokens = await auth_service.refresh_access_token(req.refresh_token)
     return {
         "access_token": tokens.access_token,
         "refresh_token": tokens.refresh_token
