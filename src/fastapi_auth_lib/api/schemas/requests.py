@@ -38,15 +38,6 @@ class LoginWithPasswordRequest(BaseModel):
         return normalize_email(value)
 
 
-class ActivateUserAccountRequest(BaseModel):
-    """Request body for account activation via token."""
-
-    token: str = Field(
-        min_length=1,
-        description="Activation token received after registration",
-    )
-
-
 class ResendActivationRequest(BaseModel):
     """Request body for resending the activation email."""
 

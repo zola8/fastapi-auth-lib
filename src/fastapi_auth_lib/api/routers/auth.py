@@ -1,11 +1,11 @@
 import logging
 
 from fastapi import APIRouter
+from fastapi import Query
 from fastapi import status
 
 from src.fastapi_auth_lib.api.dependencies import AuthServiceDep
 from src.fastapi_auth_lib.api.dependencies import EmailServiceDep
-from src.fastapi_auth_lib.api.schemas.requests import ActivateUserAccountRequest
 from src.fastapi_auth_lib.api.schemas.requests import LoginWithPasswordRequest
 from src.fastapi_auth_lib.api.schemas.requests import RefreshTokenRequest
 from src.fastapi_auth_lib.api.schemas.requests import RegisterWithPasswordRequest
@@ -51,10 +51,16 @@ async def register_with_password(
     )
 
 
-@router.post("/activate")
-async def activate(req: ActivateUserAccountRequest, auth_service: AuthServiceDep):
-    logger.debug("POST /auth/activate for token: %s", req.activation_token)
-    user = await auth_service.activate_account(req.token)
+@router.get(
+    "/activate",
+    response_model=ActivateUserAccountResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def activate_account(
+    token: str = Query(min_length=1, description="Activation token received after registration"),
+    auth_service: AuthServiceDep = None,
+) -> ActivateUserAccountResponse:
+    user = await auth_service.activate_account(token)
 
     return ActivateUserAccountResponse(
         user_id=user.user_id,

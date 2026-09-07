@@ -17,7 +17,7 @@ app = (
     .with_health_check()
     .with_exception_handlers()
     .with_cors()
-    # .with_dummy_email()
+    .with_dummy_email()
     .build()
 )
 
