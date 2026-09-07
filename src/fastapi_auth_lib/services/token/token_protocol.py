@@ -1,5 +1,13 @@
+from enum import StrEnum
 from typing import Protocol
 from uuid import UUID
+
+
+class TokenType(StrEnum):
+    ACTIVATION = "activation"
+    PASSWORD_RESET = "password_reset"
+    ACCESS = "access"
+    REFRESH = "refresh"
 
 
 class TokenServiceProtocol(Protocol):
@@ -16,3 +24,7 @@ class TokenServiceProtocol(Protocol):
     def verify_access_token(self, token: str) -> UUID: ...
 
     def verify_refresh_token(self, token: str) -> UUID: ...
+
+    def create_reset_token(self, user_id: UUID) -> str: ...
+
+    def verify_reset_token(self, token: str) -> UUID: ...

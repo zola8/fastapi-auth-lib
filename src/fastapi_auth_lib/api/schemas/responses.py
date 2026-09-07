@@ -12,7 +12,6 @@ class ErrorDetail(BaseModel):
 
 class RegisterWithPasswordResponse(BaseModel):
     """Response returned after successful password registration."""
-
     user_id: UUID
     email: EmailStr
     activation_token: str
@@ -20,12 +19,19 @@ class RegisterWithPasswordResponse(BaseModel):
 
 class ActivateUserAccountResponse(BaseModel):
     """Response returned after successful account activation."""
-
     user_id: UUID
     status: UserStatus
 
 
 class ResendActivationResponse(BaseModel):
-    """Always identical regardless of outcome (prevents account enumeration)."""
+    """Always identical regardless of outcome (anti-enumeration)."""
+    message: str
 
+
+class RequestPasswordResetResponse(BaseModel):
+    """Always identical regardless of outcome (anti-enumeration)."""
+    message: str
+
+
+class ResetPasswordResponse(BaseModel):
     message: str

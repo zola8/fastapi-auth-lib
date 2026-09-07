@@ -35,7 +35,7 @@ class AsyncAuthService:
     # Require checks
     # ------------------------------------------------------------------
 
-    def _require_hasher(self):
+    def _require_hasher(self) -> PasswordHasherProtocol:
         if self._hasher is None:
             raise FeatureNotConfiguredException(
                 description="Password hasher is not configured. "
@@ -43,7 +43,7 @@ class AsyncAuthService:
             )
         return self._hasher
 
-    def _require_token_service(self):
+    def _require_token_service(self) -> TokenServiceProtocol:
         if self._token_service is None:
             raise FeatureNotConfiguredException(
                 description="Token service is not configured. "
@@ -142,6 +142,47 @@ class AsyncAuthService:
 
         new_token = self._require_token_service().create_activation_token(user.user_id)
         return user, new_token
+
+    # ------------------------------------------------------------------
+    # Password reset
+    # ------------------------------------------------------------------
+    async def request_password_reset(self, email: str) -> tuple[UserProfile, str] | None:
+        """
+        Returns (user, reset_token) only if the account exists AND is ACTIVE.
+        Returns None otherwise — caller must not reveal which case occurred.
+        """
+        normalized_email = normalize_email(email)
+
+        identity = await self._identity_repo.find_auth_identity_by_provider_subject(
+            AuthProvider.PASSWORD, normalized_email
+        )
+        if identity is None:
+            logger.debug("user has no identity: %s", normalized_email)
+            return None
+
+        user = await self._user_service.get_user(identity.user_id)
+        if user.status != UserStatus.ACTIVE:
+            logger.debug("user is not inactive, no re-send happens. User: %s", user.email)
+            return None
+
+        reset_token = self._require_token_service().create_reset_token(user.user_id)
+        logger.debug("email: %s. reset token: %s", normalized_email, reset_token)
+        return user, reset_token
+
+    async def reset_password(self, token: str, new_password: str) -> UserProfile:
+        """Verify the reset token and update the password."""
+        user_id = self._require_token_service().verify_reset_token(token)
+
+        identity = await self._identity_repo.find_auth_identity_by_user_id(user_id)
+        if identity is None:
+            raise AuthenticationException("Invalid credentials")
+
+        identity.password_hash = self._hasher.hash_password(new_password)
+        await self._identity_repo.update_auth_identity(
+            identity.auth_identity_id, identity
+        )
+
+        return await self._user_service.get_user(user_id)
 
     # ------------------------------------------------------------------
     # Login tokens

@@ -13,6 +13,7 @@ from src.fastapi_auth_lib.services.password_hasher.password_hash_protocol import
 from src.fastapi_auth_lib.services.token.jwt_token_service import DEFAULT_ACCESS_TTL
 from src.fastapi_auth_lib.services.token.jwt_token_service import DEFAULT_ACTIVATION_TTL
 from src.fastapi_auth_lib.services.token.jwt_token_service import DEFAULT_REFRESH_TTL
+from src.fastapi_auth_lib.services.token.jwt_token_service import DEFAULT_RESET_TTL
 from src.fastapi_auth_lib.services.token.jwt_token_service import JwtTokenService
 from src.fastapi_auth_lib.services.token.token_protocol import TokenServiceProtocol
 
@@ -71,6 +72,7 @@ class AuthServiceBuilder:
         access_ttl: timedelta = DEFAULT_ACCESS_TTL,
         refresh_ttl: timedelta = DEFAULT_REFRESH_TTL,
         activation_ttl: timedelta = DEFAULT_ACTIVATION_TTL,
+        reset_ttl: timedelta = DEFAULT_RESET_TTL,
     ) -> "AuthServiceBuilder":
         self._token_service = JwtTokenService(
             secret=secret,
@@ -79,6 +81,7 @@ class AuthServiceBuilder:
             access_ttl=access_ttl,
             refresh_ttl=refresh_ttl,
             activation_ttl=activation_ttl,
+            reset_ttl=reset_ttl,
         )
         return self
 

@@ -56,3 +56,25 @@ class RefreshTokenRequest(BaseModel):
         min_length=1,
         description="Valid refresh token from a previous login",
     )
+
+
+class RequestPasswordResetRequest(BaseModel):
+    """Request body for the 'forgot password' step."""
+
+    email: EmailStr = Field(description="Registered email address")
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def _normalize_email(cls, value: str) -> str:
+        return normalize_email(value)
+
+
+class ResetPasswordRequest(BaseModel):
+    """Request body for setting a new password with a reset token."""
+
+    token: str = Field(min_length=1, description="Reset token from the email link")
+    new_password: SecretStr = Field(
+        min_length=PASSWORD_MIN_LENGTH,
+        max_length=PASSWORD_MAX_LENGTH,
+        description="New raw password",
+    )

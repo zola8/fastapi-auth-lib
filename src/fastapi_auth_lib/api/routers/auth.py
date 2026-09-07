@@ -9,10 +9,14 @@ from src.fastapi_auth_lib.api.dependencies import EmailServiceDep
 from src.fastapi_auth_lib.api.schemas.requests import LoginWithPasswordRequest
 from src.fastapi_auth_lib.api.schemas.requests import RefreshTokenRequest
 from src.fastapi_auth_lib.api.schemas.requests import RegisterWithPasswordRequest
+from src.fastapi_auth_lib.api.schemas.requests import RequestPasswordResetRequest
 from src.fastapi_auth_lib.api.schemas.requests import ResendActivationRequest
+from src.fastapi_auth_lib.api.schemas.requests import ResetPasswordRequest
 from src.fastapi_auth_lib.api.schemas.responses import ActivateUserAccountResponse
 from src.fastapi_auth_lib.api.schemas.responses import RegisterWithPasswordResponse
+from src.fastapi_auth_lib.api.schemas.responses import RequestPasswordResetResponse
 from src.fastapi_auth_lib.api.schemas.responses import ResendActivationResponse
+from src.fastapi_auth_lib.api.schemas.responses import ResetPasswordResponse
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +82,7 @@ async def resend_activation(
     auth_service: AuthServiceDep,
     email_service: EmailServiceDep,
 ) -> ResendActivationResponse:
+    # TODO replace this workflow with IdentityService?
     logger.debug("POST /auth/resend-activation for email: %s", req.email)
 
     result = await auth_service.resend_activation(req.email)
@@ -95,6 +100,53 @@ async def resend_activation(
     return ResendActivationResponse(
         message="If your account exists and is inactive, an activation email has been sent."
     )
+
+
+@router.post(
+    "/forgot-password",
+    response_model=RequestPasswordResetResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def request_password_reset(
+    req: RequestPasswordResetRequest,
+    auth_service: AuthServiceDep,
+    email_service: EmailServiceDep,
+) -> RequestPasswordResetResponse:
+    logger.debug("POST /auth/forgot-password")
+
+    result = await auth_service.request_password_reset(req.email)
+
+    if result is not None:
+        user, token = result
+        if email_service is not None:
+            await email_service.send_email(
+                to=user.email,
+                subject="Reset your password",
+                body=_email_body(user.user_id, token),
+            )
+
+    return RequestPasswordResetResponse(
+        message="If this email is registered, a reset link will be sent."
+    )
+
+
+@router.post(
+    "/reset-password",
+    response_model=ResetPasswordResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def reset_password(
+    req: ResetPasswordRequest,
+    auth_service: AuthServiceDep,
+) -> ResetPasswordResponse:
+    logger.debug("POST /auth/reset-password")
+
+    await auth_service.reset_password(
+        token=req.token,
+        new_password=req.new_password.get_secret_value(),
+    )
+
+    return ResetPasswordResponse(message="Password updated successfully.")
 
 
 @router.post("/login/password")

@@ -1,22 +1,17 @@
 import uuid
 from dataclasses import dataclass
 from datetime import timedelta
-from enum import StrEnum
 
 import jwt
 
 from src.fastapi_auth_lib.core.exceptions import TokenException
 from src.fastapi_auth_lib.core.utils import _now
+from src.fastapi_auth_lib.services.token.token_protocol import TokenType
 
+DEFAULT_ACTIVATION_TTL = timedelta(minutes=15)
+DEFAULT_RESET_TTL = timedelta(minutes=15)
 DEFAULT_ACCESS_TTL = timedelta(minutes=30)
 DEFAULT_REFRESH_TTL = timedelta(days=7)
-DEFAULT_ACTIVATION_TTL = timedelta(minutes=15)
-
-
-class TokenType(StrEnum):
-    ACCESS = "access"
-    REFRESH = "refresh"
-    ACTIVATION = "activation"
 
 
 @dataclass(frozen=True)
@@ -46,6 +41,7 @@ class JwtTokenService:
         access_ttl: timedelta = DEFAULT_ACCESS_TTL,
         refresh_ttl: timedelta = DEFAULT_REFRESH_TTL,
         activation_ttl: timedelta = DEFAULT_ACTIVATION_TTL,
+        reset_ttl: timedelta = DEFAULT_RESET_TTL,
     ) -> None:
         if not secret:
             raise ValueError("JWT secret cannot be empty")
@@ -55,6 +51,7 @@ class JwtTokenService:
         self._access_ttl = access_ttl
         self._refresh_ttl = refresh_ttl
         self._activation_ttl = activation_ttl
+        self._reset_ttl = reset_ttl
 
     # ------------------------------------------------------------------
     # Creation
@@ -67,6 +64,9 @@ class JwtTokenService:
 
     def create_activation_token(self, user_id: uuid.UUID) -> str:
         return self._create_token(user_id, TokenType.ACTIVATION, self._activation_ttl)
+
+    def create_reset_token(self, user_id: uuid.UUID) -> str:
+        return self._create_token(user_id, TokenType.PASSWORD_RESET, self._reset_ttl)
 
     def _create_token(
         self, user_id: uuid.UUID, token_type: TokenType, ttl: timedelta
@@ -92,6 +92,9 @@ class JwtTokenService:
 
     def verify_activation_token(self, token: str) -> uuid.UUID:
         return self._verify(token, TokenType.ACTIVATION)
+
+    def verify_reset_token(self, token: str) -> uuid.UUID:
+        return self._verify(token, TokenType.PASSWORD_RESET)
 
     def _verify(self, token: str, expected_type: TokenType) -> uuid.UUID:
         try:
