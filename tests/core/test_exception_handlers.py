@@ -1,9 +1,10 @@
 import pytest
 from fastapi import FastAPI
+from fastapi import Query
 from fastapi.testclient import TestClient
 
-from src.fastapi_auth_lib.api.exception_handlers import register_exception_handlers
 from src.fastapi_auth_lib.api.schemas.responses import ErrorDetail
+from src.fastapi_auth_lib.core.exception_handlers import register_exception_handlers
 from src.fastapi_auth_lib.core.exceptions import AuthenticationException
 from src.fastapi_auth_lib.core.exceptions import DuplicateEntityException
 from src.fastapi_auth_lib.core.exceptions import EntityNotFoundException
@@ -31,6 +32,10 @@ def app():
     @app.get("/token-error")
     async def raise_token():
         raise TokenException("Token expired")
+
+    @app.get("/validate")
+    async def validate(q: str = Query(..., min_length=3)):
+        return {"q": q}
 
     return app
 
@@ -90,3 +95,11 @@ class TestRegisterExceptionHandlers:
         response = client.get("/empty")
         assert response.status_code == 404
         assert response.json() == error_response("")
+
+    def test_request_validation_error(self, client):
+        """Should return 422 with error_msg for invalid query param."""
+        response = client.get("/validate?q=ab")
+        assert response.status_code == 422
+        data = response.json()
+        assert "error_msg" in data
+        assert "q" in data["error_msg"]

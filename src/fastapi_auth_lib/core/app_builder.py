@@ -5,7 +5,7 @@ from typing import Callable
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.fastapi_auth_lib.api.exception_handlers import register_exception_handlers
+from src.fastapi_auth_lib.core.exception_handlers import register_exception_handlers
 from src.fastapi_auth_lib.api.routers.admin import router as admin_router
 from src.fastapi_auth_lib.api.routers.auth import router as auth_router
 from src.fastapi_auth_lib.api.routers.users import router as user_router
@@ -235,7 +235,6 @@ class AppBuilder:
     def with_email_service(self, email_service: EmailServiceProtocol | None) -> "AppBuilder":
         """
         Configure the email service.
-        If never called, defaults to DummyLoggerEmailService.
         """
         self._email_service = email_service
         return self

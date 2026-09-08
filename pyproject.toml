@@ -50,6 +50,10 @@ where = ["src"]
 #    "--cov-report=term-missing"
 #]
 
+filterwarnings = [
+    "ignore::DeprecationWarning:starlette.testclient",
+]
+
 pythonpath = "src"
 testpaths = "tests"
 asyncio_mode = "auto"
