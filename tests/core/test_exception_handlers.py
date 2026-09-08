@@ -8,6 +8,7 @@ from src.fastapi_auth_lib.core.exception_handlers import register_exception_hand
 from src.fastapi_auth_lib.core.exceptions import AuthenticationException
 from src.fastapi_auth_lib.core.exceptions import DuplicateEntityException
 from src.fastapi_auth_lib.core.exceptions import EntityNotFoundException
+from src.fastapi_auth_lib.core.exceptions import PermissionDeniedException
 from src.fastapi_auth_lib.core.exceptions import TokenException
 
 
@@ -36,6 +37,10 @@ def app():
     @app.get("/validate")
     async def validate(q: str = Query(..., min_length=3)):
         return {"q": q}
+
+    @app.get("/permission-denied")
+    async def raise_permission_denied():
+        raise PermissionDeniedException("Not allowed")
 
     return app
 
@@ -103,3 +108,9 @@ class TestRegisterExceptionHandlers:
         data = response.json()
         assert "error_msg" in data
         assert "q" in data["error_msg"]
+
+    def test_permission_denied_handler(self, client):
+        """Should return 403 with correct description."""
+        response = client.get("/permission-denied")
+        assert response.status_code == 403
+        assert response.json() == error_response("Not allowed")

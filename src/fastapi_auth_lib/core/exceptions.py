@@ -38,3 +38,14 @@ class FeatureNotConfiguredException(Exception):
     def __init__(self, description: str) -> None:
         self.description = description
         super().__init__(description)
+
+
+class PermissionDeniedException(Exception):
+    """
+    Raised when a permission is denied.
+    (distinct from 401: authenticated but not allowed)
+    """
+
+    def __init__(self, description: str) -> None:
+        self.description = description
+        super().__init__(description)

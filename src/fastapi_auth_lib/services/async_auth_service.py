@@ -207,7 +207,7 @@ class AsyncAuthService:
         )
 
     # ------------------------------------------------------------------
-    # Protected-route helper (backs your get_current_logged_in_user dep)
+    # Protected-route helper (backs your get_current_user dep)
     # ------------------------------------------------------------------
     async def get_user_from_access_token(self, token: str) -> UserProfile:
         user_id = self._require_token_service().verify_access_token(token)

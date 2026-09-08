@@ -2,6 +2,7 @@ from src.fastapi_auth_lib.core.exceptions import AuthenticationException
 from src.fastapi_auth_lib.core.exceptions import DuplicateEntityException
 from src.fastapi_auth_lib.core.exceptions import EntityNotFoundException
 from src.fastapi_auth_lib.core.exceptions import FeatureNotConfiguredException
+from src.fastapi_auth_lib.core.exceptions import PermissionDeniedException
 from src.fastapi_auth_lib.core.exceptions import TokenException
 
 
@@ -120,3 +121,33 @@ class TestFeatureNotConfiguredException:
         exc = FeatureNotConfiguredException(None)
         assert str(exc) == "None"
         assert exc.description is None
+
+
+class TestPermissionDeniedException:
+    """Tests for PermissionDeniedException."""
+
+    def test_inherits_from_exception(self):
+        """Should be a subclass of Exception."""
+        assert issubclass(PermissionDeniedException, Exception)
+
+    def test_message_is_description(self):
+        """Message should match the provided description."""
+        exc = PermissionDeniedException("You cannot do this")
+        assert str(exc) == "You cannot do this"
+
+    def test_description_attribute(self):
+        """The description attribute should be set correctly."""
+        exc = PermissionDeniedException("Admin only")
+        assert exc.description == "Admin only"
+
+    def test_none_description(self):
+        """None description should be accepted and formatted as 'None'."""
+        exc = PermissionDeniedException(None)
+        assert str(exc) == "None"
+        assert exc.description is None
+
+    def test_empty_description(self):
+        """Empty string should produce an empty message."""
+        exc = PermissionDeniedException("")
+        assert str(exc) == ""
+        assert exc.description == ""

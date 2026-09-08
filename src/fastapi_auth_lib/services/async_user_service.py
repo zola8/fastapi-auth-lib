@@ -25,6 +25,10 @@ class AsyncUserService:
             )
         return user
 
+    async def find_user_by_email(self, email: str) -> UserProfile | None:
+        """Returns the user if found, or None if not. Does not raise."""
+        return await self._user_repo.find_user_by_email(email)
+
     async def list_users(self) -> list[UserProfile]:
         return await self._user_repo.list_users()
 

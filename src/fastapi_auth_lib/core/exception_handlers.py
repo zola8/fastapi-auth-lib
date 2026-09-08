@@ -9,6 +9,7 @@ from src.fastapi_auth_lib.core.exceptions import AuthenticationException
 from src.fastapi_auth_lib.core.exceptions import DuplicateEntityException
 from src.fastapi_auth_lib.core.exceptions import EntityNotFoundException
 from src.fastapi_auth_lib.core.exceptions import FeatureNotConfiguredException
+from src.fastapi_auth_lib.core.exceptions import PermissionDeniedException
 from src.fastapi_auth_lib.core.exceptions import TokenException
 
 
@@ -45,6 +46,13 @@ def register_exception_handlers(app: FastAPI):
     async def handle_feature(request: Request, exc: FeatureNotConfiguredException):
         return JSONResponse(
             status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            content=ErrorDetail(error_msg=exc.description).model_dump(),
+        )
+
+    @app.exception_handler(PermissionDeniedException)
+    async def handle_permissions(request: Request, exc: PermissionDeniedException):
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
             content=ErrorDetail(error_msg=exc.description).model_dump(),
         )
 
