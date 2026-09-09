@@ -13,6 +13,7 @@ from src.fastapi_auth_lib.repositories.db_models import db_auth_identity  # noqa
 from src.fastapi_auth_lib.repositories.db_models import db_user_profile  # noqa: F401
 from src.fastapi_auth_lib.repositories.db_models.db_base import Base
 from src.fastapi_auth_lib.repositories.sql.async_auth_identity import SqlAsyncAuthIdentityRepository
+from src.fastapi_auth_lib.repositories.sql.async_refresh_token import SqlAsyncRefreshTokenRepository
 from src.fastapi_auth_lib.repositories.sql.async_user_profile import SqlAsyncUserProfileRepository
 from src.fastapi_auth_lib.services.async_auth_service import AsyncAuthService
 from src.fastapi_auth_lib.services.async_user_service import AsyncUserService
@@ -64,11 +65,16 @@ async def auth_identity_repo(session) -> SqlAsyncAuthIdentityRepository:
 
 
 @pytest_asyncio.fixture(scope="function")
-async def both_repos(session):
-    """Provides both repos sharing the same session for integration tests."""
+async def refresh_repo(session) -> SqlAsyncRefreshTokenRepository:
+    return SqlAsyncRefreshTokenRepository(session)
+
+
+@pytest_asyncio.fixture(scope="function")
+async def user_auth_refresh_repos(session):
     return (
         SqlAsyncUserProfileRepository(session),
         SqlAsyncAuthIdentityRepository(session),
+        SqlAsyncRefreshTokenRepository(session),
     )
 
 

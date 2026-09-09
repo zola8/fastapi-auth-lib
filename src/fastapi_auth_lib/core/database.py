@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from src.fastapi_auth_lib.repositories.db_models import Base
 from src.fastapi_auth_lib.repositories.db_models import db_auth_identity  # noqa: F401
 from src.fastapi_auth_lib.repositories.db_models import db_user_profile  # noqa: F401
+from src.fastapi_auth_lib.repositories.db_models import db_refresh_token  # noqa: F401
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./auth_lib.db")
 

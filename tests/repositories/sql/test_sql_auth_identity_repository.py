@@ -20,8 +20,8 @@ async def _create_user(user_repo, email="test@example.com"):
 # CREATE
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
-async def test_create_auth_identity_assigns_id(both_repos):
-    user_repo, identity_repo = both_repos
+async def test_create_auth_identity_assigns_id(user_auth_refresh_repos):
+    user_repo, auth_repo, refresh_repo = user_auth_refresh_repos
     user = await _create_user(user_repo)
 
     identity = AuthIdentity(
@@ -30,7 +30,7 @@ async def test_create_auth_identity_assigns_id(both_repos):
         provider_subject="test@example.com",
         password_hash="hashed_password",
     )
-    created = await identity_repo.create_auth_identity(identity)
+    created = await auth_repo.create_auth_identity(identity)
 
     assert created.auth_identity_id is not None
     assert created.user_id == user.user_id
@@ -40,12 +40,12 @@ async def test_create_auth_identity_assigns_id(both_repos):
 
 
 @pytest.mark.asyncio
-async def test_create_duplicate_provider_subject_raises(both_repos):
-    user_repo, identity_repo = both_repos
+async def test_create_duplicate_provider_subject_raises(user_auth_refresh_repos):
+    user_repo, auth_repo, refresh_repo = user_auth_refresh_repos
     user1 = await _create_user(user_repo, "dup@example.com")
     user2 = await _create_user(user_repo, "other@example.com")
 
-    await identity_repo.create_auth_identity(
+    await auth_repo.create_auth_identity(
         AuthIdentity(
             user_id=user1.user_id,
             provider=AuthProvider.PASSWORD,
@@ -55,7 +55,7 @@ async def test_create_duplicate_provider_subject_raises(both_repos):
     )
 
     with pytest.raises(DuplicateEntityException):
-        await identity_repo.create_auth_identity(
+        await auth_repo.create_auth_identity(
             AuthIdentity(
                 user_id=user2.user_id,
                 provider=AuthProvider.PASSWORD,
@@ -66,12 +66,12 @@ async def test_create_duplicate_provider_subject_raises(both_repos):
 
 
 @pytest.mark.asyncio
-async def test_create_duplicate_user_id_raises(both_repos):
+async def test_create_duplicate_user_id_raises(user_auth_refresh_repos):
     """1:1 constraint: one identity per user."""
-    user_repo, identity_repo = both_repos
+    user_repo, auth_repo, refresh_repo = user_auth_refresh_repos
     user = await _create_user(user_repo)
 
-    await identity_repo.create_auth_identity(
+    await auth_repo.create_auth_identity(
         AuthIdentity(
             user_id=user.user_id,
             provider=AuthProvider.PASSWORD,
@@ -81,7 +81,7 @@ async def test_create_duplicate_user_id_raises(both_repos):
     )
 
     with pytest.raises(DuplicateEntityException):
-        await identity_repo.create_auth_identity(
+        await auth_repo.create_auth_identity(
             AuthIdentity(
                 user_id=user.user_id,  # same user, different subject
                 provider=AuthProvider.PASSWORD,
@@ -95,10 +95,10 @@ async def test_create_duplicate_user_id_raises(both_repos):
 # FIND BY ID
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
-async def test_find_auth_identity_by_id_returns_identity(both_repos):
-    user_repo, identity_repo = both_repos
+async def test_find_auth_identity_by_id_returns_identity(user_auth_refresh_repos):
+    user_repo, auth_repo, refresh_repo = user_auth_refresh_repos
     user = await _create_user(user_repo)
-    created = await identity_repo.create_auth_identity(
+    created = await auth_repo.create_auth_identity(
         AuthIdentity(
             user_id=user.user_id,
             provider=AuthProvider.PASSWORD,
@@ -107,7 +107,7 @@ async def test_find_auth_identity_by_id_returns_identity(both_repos):
         )
     )
 
-    fetched = await identity_repo.find_auth_identity_by_id(created.auth_identity_id)
+    fetched = await auth_repo.find_auth_identity_by_id(created.auth_identity_id)
 
     assert fetched is not None
     assert fetched.auth_identity_id == created.auth_identity_id
@@ -124,10 +124,10 @@ async def test_find_auth_identity_by_id_missing_returns_none(auth_identity_repo)
 # FIND BY USER ID
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
-async def test_find_auth_identity_by_user_id_returns_identity(both_repos):
-    user_repo, identity_repo = both_repos
+async def test_find_auth_identity_by_user_id_returns_identity(user_auth_refresh_repos):
+    user_repo, auth_repo, refresh_repo = user_auth_refresh_repos
     user = await _create_user(user_repo)
-    await identity_repo.create_auth_identity(
+    await auth_repo.create_auth_identity(
         AuthIdentity(
             user_id=user.user_id,
             provider=AuthProvider.PASSWORD,
@@ -136,7 +136,7 @@ async def test_find_auth_identity_by_user_id_returns_identity(both_repos):
         )
     )
 
-    fetched = await identity_repo.find_auth_identity_by_user_id(user.user_id)
+    fetched = await auth_repo.find_auth_identity_by_user_id(user.user_id)
 
     assert fetched is not None
     assert fetched.user_id == user.user_id
@@ -153,10 +153,10 @@ async def test_find_auth_identity_by_user_id_missing_returns_none(auth_identity_
 # FIND BY PROVIDER SUBJECT
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
-async def test_find_auth_identity_by_provider_subject_returns_identity(both_repos):
-    user_repo, identity_repo = both_repos
+async def test_find_auth_identity_by_provider_subject_returns_identity(user_auth_refresh_repos):
+    user_repo, auth_repo, refresh_repo = user_auth_refresh_repos
     user = await _create_user(user_repo)
-    await identity_repo.create_auth_identity(
+    await auth_repo.create_auth_identity(
         AuthIdentity(
             user_id=user.user_id,
             provider=AuthProvider.PASSWORD,
@@ -165,7 +165,7 @@ async def test_find_auth_identity_by_provider_subject_returns_identity(both_repo
         )
     )
 
-    fetched = await identity_repo.find_auth_identity_by_provider_subject(
+    fetched = await auth_repo.find_auth_identity_by_provider_subject(
         AuthProvider.PASSWORD, "bysubject@example.com"
     )
 
@@ -187,10 +187,10 @@ async def test_find_auth_identity_by_provider_subject_missing_returns_none(
 # UPDATE
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
-async def test_update_auth_identity_changes_fields(both_repos):
-    user_repo, identity_repo = both_repos
+async def test_update_auth_identity_changes_fields(user_auth_refresh_repos):
+    user_repo, auth_repo, refresh_repo = user_auth_refresh_repos
     user = await _create_user(user_repo)
-    created = await identity_repo.create_auth_identity(
+    created = await auth_repo.create_auth_identity(
         AuthIdentity(
             user_id=user.user_id,
             provider=AuthProvider.PASSWORD,
@@ -205,7 +205,7 @@ async def test_update_auth_identity_changes_fields(both_repos):
         provider_subject="new@example.com",
         password_hash="new_hash",
     )
-    updated = await identity_repo.update_auth_identity(
+    updated = await auth_repo.update_auth_identity(
         created.auth_identity_id, updated_model
     )
 
@@ -227,12 +227,12 @@ async def test_update_missing_identity_returns_none(auth_identity_repo):
 
 
 @pytest.mark.asyncio
-async def test_update_subject_conflict_raises(both_repos):
-    user_repo, identity_repo = both_repos
+async def test_update_subject_conflict_raises(user_auth_refresh_repos):
+    user_repo, auth_repo, refresh_repo = user_auth_refresh_repos
     user1 = await _create_user(user_repo, "taken@example.com")
     user2 = await _create_user(user_repo, "free@example.com")
 
-    await identity_repo.create_auth_identity(
+    await auth_repo.create_auth_identity(
         AuthIdentity(
             user_id=user1.user_id,
             provider=AuthProvider.PASSWORD,
@@ -240,7 +240,7 @@ async def test_update_subject_conflict_raises(both_repos):
             password_hash="hash1",
         )
     )
-    created2 = await identity_repo.create_auth_identity(
+    created2 = await auth_repo.create_auth_identity(
         AuthIdentity(
             user_id=user2.user_id,
             provider=AuthProvider.PASSWORD,
@@ -257,19 +257,19 @@ async def test_update_subject_conflict_raises(both_repos):
     )
 
     with pytest.raises(DuplicateEntityException):
-        await identity_repo.update_auth_identity(
+        await auth_repo.update_auth_identity(
             created2.auth_identity_id, conflict_model
         )
 
 
 @pytest.mark.asyncio
-async def test_update_user_id_reassignment_conflict_raises(both_repos):
+async def test_update_user_id_reassignment_conflict_raises(user_auth_refresh_repos):
     """Reassigning identity to a user who already has one should fail."""
-    user_repo, identity_repo = both_repos
+    user_repo, auth_repo, refresh_repo = user_auth_refresh_repos
     user1 = await _create_user(user_repo, "user1@example.com")
     user2 = await _create_user(user_repo, "user2@example.com")
 
-    identity1 = await identity_repo.create_auth_identity(
+    identity1 = await auth_repo.create_auth_identity(
         AuthIdentity(
             user_id=user1.user_id,
             provider=AuthProvider.PASSWORD,
@@ -277,7 +277,7 @@ async def test_update_user_id_reassignment_conflict_raises(both_repos):
             password_hash="hash1",
         )
     )
-    await identity_repo.create_auth_identity(
+    await auth_repo.create_auth_identity(
         AuthIdentity(
             user_id=user2.user_id,
             provider=AuthProvider.PASSWORD,
@@ -294,17 +294,17 @@ async def test_update_user_id_reassignment_conflict_raises(both_repos):
     )
 
     with pytest.raises(DuplicateEntityException):
-        await identity_repo.update_auth_identity(identity1.auth_identity_id, reassign_model)
+        await auth_repo.update_auth_identity(identity1.auth_identity_id, reassign_model)
 
 
 # ---------------------------------------------------------------------------
 # DELETE
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
-async def test_delete_auth_identity_removes_it(both_repos):
-    user_repo, identity_repo = both_repos
+async def test_delete_auth_identity_removes_it(user_auth_refresh_repos):
+    user_repo, auth_repo, refresh_repo = user_auth_refresh_repos
     user = await _create_user(user_repo)
-    created = await identity_repo.create_auth_identity(
+    created = await auth_repo.create_auth_identity(
         AuthIdentity(
             user_id=user.user_id,
             provider=AuthProvider.PASSWORD,
@@ -313,9 +313,9 @@ async def test_delete_auth_identity_removes_it(both_repos):
         )
     )
 
-    await identity_repo.delete_auth_identity(created.auth_identity_id)
+    await auth_repo.delete_auth_identity(created.auth_identity_id)
 
-    fetched = await identity_repo.find_auth_identity_by_id(created.auth_identity_id)
+    fetched = await auth_repo.find_auth_identity_by_id(created.auth_identity_id)
     assert fetched is None
 
 
@@ -329,11 +329,11 @@ async def test_delete_missing_identity_is_noop(auth_identity_repo):
 # CASCADE DELETE (user deletion removes identity)
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
-async def test_hard_delete_user_cascades_to_identity(both_repos):
+async def test_hard_delete_user_cascades_to_identity(user_auth_refresh_repos):
     """DB-level CASCADE: deleting a user removes their identity."""
-    user_repo, identity_repo = both_repos
+    user_repo, auth_repo, refresh_repo = user_auth_refresh_repos
     user = await _create_user(user_repo)
-    identity = await identity_repo.create_auth_identity(
+    identity = await auth_repo.create_auth_identity(
         AuthIdentity(
             user_id=user.user_id,
             provider=AuthProvider.PASSWORD,
@@ -344,7 +344,7 @@ async def test_hard_delete_user_cascades_to_identity(both_repos):
 
     await user_repo.delete_user(user.user_id, hard_delete=True)
 
-    fetched_identity = await identity_repo.find_auth_identity_by_id(
+    fetched_identity = await auth_repo.find_auth_identity_by_id(
         identity.auth_identity_id
     )
     assert fetched_identity is None
