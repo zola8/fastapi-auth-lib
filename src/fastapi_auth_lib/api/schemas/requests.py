@@ -50,11 +50,11 @@ class ResendActivationRequest(BaseModel):
 
 
 class RefreshTokenRequest(BaseModel):
-    """Request body for refreshing an access token."""
+    """Request body containing a refresh token (used by /refresh and /logout)."""
 
     refresh_token: str = Field(
         min_length=1,
-        description="Valid refresh token from a previous login",
+        description="Valid refresh token",
     )
 
 

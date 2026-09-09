@@ -5,9 +5,7 @@ import pytest
 
 from src.fastapi_auth_lib.core.utils import _now
 from src.fastapi_auth_lib.models.refresh_token import RefreshToken
-from src.fastapi_auth_lib.repositories.memory.async_refresh_token import (
-    InMemoryAsyncRefreshTokenRepository,
-)
+from src.fastapi_auth_lib.repositories.memory.async_refresh_token import InMemoryAsyncRefreshTokenRepository
 
 
 @pytest.fixture

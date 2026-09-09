@@ -27,7 +27,7 @@ class TestJwtTokenServiceConstructor:
         assert token_service._issuer == TEST_ISSUER
         assert token_service._algorithm == "HS256"
         assert token_service._access_ttl == DEFAULT_ACCESS_TTL
-        assert token_service._refresh_ttl == DEFAULT_REFRESH_TTL
+        assert token_service._refresh_ttl == timedelta(hours=1)
         assert token_service._activation_ttl == DEFAULT_ACTIVATION_TTL
         assert token_service._reset_ttl == DEFAULT_RESET_TTL
 
@@ -212,3 +212,77 @@ class TestJwtTokenServiceVerification:
     def test_verify_empty_string_raises(self, token_service):
         with pytest.raises(TokenException):
             token_service.verify_access_token("")
+
+
+class TestJwtTokenServiceUniqueness:
+    """Tests for the jti (JWT ID) claim ensuring token uniqueness."""
+
+    def decode_token(self, token: str) -> dict:
+        return jwt.decode(
+            token,
+            TEST_SECRET,
+            algorithms=["HS256"],
+            issuer=TEST_ISSUER,
+        )
+
+    def test_jti_claim_is_present(self, token_service):
+        user_id = uuid.uuid4()
+        token = token_service.create_access_token(user_id)
+        claims = self.decode_token(token)
+
+        assert "jti" in claims
+
+    def test_jti_is_valid_uuid(self, token_service):
+        user_id = uuid.uuid4()
+        token = token_service.create_access_token(user_id)
+        claims = self.decode_token(token)
+
+        # Should parse as a UUID without raising
+        parsed = uuid.UUID(claims["jti"])
+        assert parsed is not None
+
+    def test_two_tokens_same_user_have_different_jti(self, token_service):
+        """Critical: prevents identical tokens when issued in the same second."""
+        user_id = uuid.uuid4()
+        token1 = token_service.create_access_token(user_id)
+        token2 = token_service.create_access_token(user_id)
+
+        claims1 = self.decode_token(token1)
+        claims2 = self.decode_token(token2)
+
+        assert claims1["jti"] != claims2["jti"]
+
+    def test_two_tokens_are_different_strings(self, token_service):
+        """Same user, same second — tokens must still differ."""
+        user_id = uuid.uuid4()
+        token1 = token_service.create_refresh_token(user_id)
+        token2 = token_service.create_refresh_token(user_id)
+
+        assert token1 != token2
+
+    def test_all_token_types_have_jti(self, token_service):
+        user_id = uuid.uuid4()
+
+        tokens = [
+            token_service.create_access_token(user_id),
+            token_service.create_refresh_token(user_id),
+            token_service.create_activation_token(user_id),
+            token_service.create_reset_token(user_id),
+        ]
+
+        for token in tokens:
+            claims = self.decode_token(token)
+            assert "jti" in claims
+            uuid.UUID(claims["jti"])  # must not raise
+
+    def test_jti_unique_across_token_types(self, token_service):
+        """Each token gets its own jti regardless of type."""
+        user_id = uuid.uuid4()
+
+        access = self.decode_token(token_service.create_access_token(user_id))
+        refresh = self.decode_token(token_service.create_refresh_token(user_id))
+        activation = self.decode_token(token_service.create_activation_token(user_id))
+        reset = self.decode_token(token_service.create_reset_token(user_id))
+
+        jti_values = [access["jti"], refresh["jti"], activation["jti"], reset["jti"]]
+        assert len(set(jti_values)) == 4  # all unique

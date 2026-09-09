@@ -4,10 +4,13 @@ from fastapi import APIRouter
 from fastapi import Query
 from fastapi import status
 
+from fastapi_auth_lib.api.dependencies import CurrentUserDep
+from fastapi_auth_lib.api.schemas.requests import RefreshTokenRequest
+from fastapi_auth_lib.api.schemas.responses import LogoutResponse
+from fastapi_auth_lib.api.schemas.responses import TokenPairResponse
 from src.fastapi_auth_lib.api.dependencies import AuthServiceDep
 from src.fastapi_auth_lib.api.dependencies import EmailServiceDep
 from src.fastapi_auth_lib.api.schemas.requests import LoginWithPasswordRequest
-from src.fastapi_auth_lib.api.schemas.requests import RefreshTokenRequest
 from src.fastapi_auth_lib.api.schemas.requests import RegisterWithPasswordRequest
 from src.fastapi_auth_lib.api.schemas.requests import RequestPasswordResetRequest
 from src.fastapi_auth_lib.api.schemas.requests import ResendActivationRequest
@@ -39,7 +42,7 @@ async def register_with_password(
     logger.debug("POST /register/password for email: %s", req.email)
     # TODO replace this workflow with IdentityService?
     user = await auth_service.register(req.email, req.password.get_secret_value())
-    activation_token = auth_service.create_activation_token(user)
+    activation_token = await auth_service.create_activation_token(user)
 
     if email_service is not None:
         await email_service.send_email(
@@ -149,20 +152,88 @@ async def reset_password(
     return ResetPasswordResponse(message="Password updated successfully.")
 
 
-@router.post("/login/password")
-async def login(req: LoginWithPasswordRequest, auth_service: AuthServiceDep):
-    user = await auth_service.authenticate_with_password(req.email, req.password.get_secret_value())
-    tokens = auth_service.create_token_pair(user)
-    return {
-        "access_token": tokens.access_token,
-        "refresh_token": tokens.refresh_token
-    }
+# ---------------------------------------------------------------------------
+# Login
+# ---------------------------------------------------------------------------
+@router.post(
+    "/login/password",
+    response_model=TokenPairResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def login_with_password(
+    req: LoginWithPasswordRequest,
+    auth_service: AuthServiceDep,
+) -> TokenPairResponse:
+    logger.debug("POST /auth/login/password")
+
+    user = await auth_service.authenticate_with_password(
+        email=req.email,
+        password=req.password.get_secret_value(),
+    )
+    token_pair = await auth_service.create_token_pair(user)
+
+    return TokenPairResponse(
+        access_token=token_pair.access_token,
+        refresh_token=token_pair.refresh_token,
+    )
 
 
-@router.post("/refresh")
-async def refresh(req: RefreshTokenRequest, auth_service: AuthServiceDep):
-    tokens = await auth_service.refresh_access_token(req.refresh_token)
-    return {
-        "access_token": tokens.access_token,
-        "refresh_token": tokens.refresh_token
-    }
+# ---------------------------------------------------------------------------
+# Refresh (stateful with rotation)
+# ---------------------------------------------------------------------------
+@router.post(
+    "/refresh",
+    response_model=TokenPairResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def refresh_tokens(
+    req: RefreshTokenRequest,
+    auth_service: AuthServiceDep,
+) -> TokenPairResponse:
+    logger.debug("POST /auth/refresh")
+
+    token_pair = await auth_service.refresh_access_token(req.refresh_token)
+
+    return TokenPairResponse(
+        access_token=token_pair.access_token,
+        refresh_token=token_pair.refresh_token,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Logout — single session
+# ---------------------------------------------------------------------------
+@router.post(
+    "/logout",
+    response_model=LogoutResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def logout(
+    req: RefreshTokenRequest,
+    auth_service: AuthServiceDep,
+    current_user: CurrentUserDep,
+) -> LogoutResponse:
+    logger.debug("POST /auth/logout")
+
+    await auth_service.logout(req.refresh_token)
+
+    return LogoutResponse(message="Session revoked successfully.")
+
+
+# ---------------------------------------------------------------------------
+# Logout — all sessions
+# ---------------------------------------------------------------------------
+@router.post(
+    "/logout-everywhere",
+    response_model=LogoutResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def logout_everywhere(
+    current_user: CurrentUserDep,
+    auth_service: AuthServiceDep,
+) -> LogoutResponse:
+    logger.debug("POST /auth/logout-everywhere")
+
+    await auth_service.logout_all_sessions(current_user.user_id)
+
+    return LogoutResponse(message="All sessions revoked successfully.")

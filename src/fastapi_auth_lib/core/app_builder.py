@@ -51,8 +51,6 @@ class AppBuilder:
         self._sql_mode: bool = False
         self._email_service: EmailServiceProtocol | None = None
 
-        # TODO add refresh token service
-
         # CORS configuration
         self._cors_enabled: bool = False
         self._cors_origins: list[str] = [

@@ -1,4 +1,5 @@
 import logging
+from uuid import UUID
 
 from src.fastapi_auth_lib.core.constants import AUTH_IDENTITY_ENTITY
 from src.fastapi_auth_lib.core.exceptions import AuthenticationException
@@ -20,16 +21,19 @@ logger = logging.getLogger(__name__)
 
 class AsyncAuthService:
 
-    def __init__(self,
-                 user_service: AsyncUserService,
-                 identity_repo: AsyncAuthIdentityRepository,
-                 password_hasher: PasswordHasherProtocol | None = None,
-                 token_service: TokenServiceProtocol | None = None,
-                 ) -> None:
+    def __init__(
+        self,
+        user_service: AsyncUserService,
+        identity_repo: AsyncAuthIdentityRepository,
+        password_hasher: PasswordHasherProtocol | None = None,
+        token_service: TokenServiceProtocol | None = None,
+        refresh_token_service=None,
+    ) -> None:
         self._user_service = user_service
         self._identity_repo = identity_repo
         self._hasher = password_hasher
         self._token_service = token_service
+        self._refresh_token_service = refresh_token_service
 
     # ------------------------------------------------------------------
     # Require checks
@@ -50,6 +54,14 @@ class AsyncAuthService:
                             "Add .with_jwt(...) or .with_token_service(...) to the builder."
             )
         return self._token_service
+
+    def _require_refresh_service(self):
+        if self._refresh_token_service is None:
+            raise FeatureNotConfiguredException(
+                description="Refresh token service is not configured. "
+                            "Add .with_refresh_token_service(...) to the builder."
+            )
+        return self._refresh_token_service
 
     # ------------------------------------------------------------------
     # Registration
@@ -105,7 +117,7 @@ class AsyncAuthService:
     # Activation
     # ------------------------------------------------------------------
 
-    def create_activation_token(self, user: UserProfile) -> str:
+    async def create_activation_token(self, user: UserProfile) -> str:
         """Issued right after registration; sent to the user by email."""
         return self._require_token_service().create_activation_token(user.user_id)
 
@@ -182,29 +194,62 @@ class AsyncAuthService:
             identity.auth_identity_id, identity
         )
 
+        await self.logout_all_sessions(user_id)
+
         return await self._user_service.get_user(user_id)
 
     # ------------------------------------------------------------------
     # Login tokens
     # ------------------------------------------------------------------
-    def create_token_pair(self, user: UserProfile) -> TokenPair:
-        """Called by the router after authenticate_with_password succeeds."""
+    async def create_token_pair(self, user: UserProfile) -> TokenPair:
+        """Create access + refresh tokens. Refresh token is stored in DB."""
         ts = self._require_token_service()
+        rts = self._require_refresh_service()
+
+        access_token = ts.create_access_token(user.user_id)
+        refresh_token = await rts.issue_refresh_token(user.user_id)
+
         return TokenPair(
-            access_token=ts.create_access_token(user.user_id),
-            refresh_token=ts.create_refresh_token(user.user_id),
+            access_token=access_token,
+            refresh_token=refresh_token,
         )
 
     async def refresh_access_token(self, refresh_token: str) -> TokenPair:
+        """
+        Verify the refresh token, rotate it (delete old, issue new),
+        and return a new token pair.
+        """
         ts = self._require_token_service()
-        user_id = ts.verify_refresh_token(refresh_token)
+        rts = self._require_refresh_service()
+
+        user_id, new_refresh_token = await rts.rotate_refresh_token(refresh_token)
+
+        # Verify user is still active
         user = await self._user_service.get_user(user_id)
         if user.status != UserStatus.ACTIVE:
+            # Revoke the newly issued token if user was deactivated between verify and check
+            await rts.revoke_refresh_token(new_refresh_token)
             raise AuthenticationException("Invalid credentials")
+
+        new_access_token = ts.create_access_token(user_id)
+
         return TokenPair(
-            access_token=ts.create_access_token(user_id),
-            refresh_token=ts.create_refresh_token(user_id),
+            access_token=new_access_token,
+            refresh_token=new_refresh_token,
         )
+
+    # ------------------------------------------------------------------
+    # Logout
+    # ------------------------------------------------------------------
+    async def logout(self, refresh_token: str) -> None:
+        """Revoke a single refresh token (logout one session)."""
+        rts = self._require_refresh_service()
+        await rts.revoke_refresh_token(refresh_token)
+
+    async def logout_all_sessions(self, user_id: UUID) -> None:
+        """Revoke all refresh tokens for a user (logout everywhere)."""
+        rts = self._require_refresh_service()
+        await rts.revoke_all_for_user(user_id)
 
     # ------------------------------------------------------------------
     # Protected-route helper (backs your get_current_user dep)

@@ -35,3 +35,14 @@ class RequestPasswordResetResponse(BaseModel):
 
 class ResetPasswordResponse(BaseModel):
     message: str
+
+
+class LogoutResponse(BaseModel):
+    message: str
+
+
+class TokenPairResponse(BaseModel):
+    """Response containing a fresh access + refresh token pair."""
+
+    access_token: str
+    refresh_token: str

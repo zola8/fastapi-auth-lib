@@ -78,6 +78,7 @@ class JwtTokenService:
             "iss": self._issuer,
             "iat": now,
             "exp": now + ttl,
+            "jti": str(uuid.uuid4()),
         }
         return jwt.encode(payload, self._secret, algorithm=self._algorithm)
 

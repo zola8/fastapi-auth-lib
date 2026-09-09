@@ -3,6 +3,9 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from fastapi_auth_lib.repositories.memory.async_refresh_token import InMemoryAsyncRefreshTokenRepository
+from fastapi_auth_lib.repositories.sql.async_refresh_token import SqlAsyncRefreshTokenRepository
+from fastapi_auth_lib.services.session.refresh_token_service import RefreshTokenService
 from src.fastapi_auth_lib.repositories.memory.async_auth_identity import InMemoryAsyncAuthIdentityRepository
 from src.fastapi_auth_lib.repositories.memory.async_user_profile import InMemoryAsyncUserProfileRepository
 from src.fastapi_auth_lib.repositories.sql.async_auth_identity import SqlAsyncAuthIdentityRepository
@@ -42,6 +45,8 @@ class AuthServiceBuilder:
         self._identity_repo: Any | None = None
         self._hasher: PasswordHasherProtocol | None = None
         self._token_service: TokenServiceProtocol | None = None
+        # TODO protocol?
+        self._refresh_token_repo: Any | None = None
 
     def with_password_hasher(self, hasher) -> "AuthServiceBuilder":
         self._hasher = hasher
@@ -53,10 +58,12 @@ class AuthServiceBuilder:
 
     def with_in_memory_identity_repo(self) -> "AuthServiceBuilder":
         self._identity_repo = InMemoryAsyncAuthIdentityRepository()
+        self._refresh_token_repo = InMemoryAsyncRefreshTokenRepository()
         return self
 
     def with_sql_session(self, session: AsyncSession) -> "AuthServiceBuilder":
         self._identity_repo = SqlAsyncAuthIdentityRepository(session)
+        self._refresh_token_repo = SqlAsyncRefreshTokenRepository(session)
         return self
 
     def with_token_service(self, token_service: TokenServiceProtocol) -> "AuthServiceBuilder":
@@ -90,10 +97,20 @@ class AuthServiceBuilder:
             self._user_service = UserServiceBuilder().build()
         if self._identity_repo is None:
             self._identity_repo = InMemoryAsyncAuthIdentityRepository()
+        if self._refresh_token_repo is None:
+            self._refresh_token_repo = InMemoryAsyncRefreshTokenRepository()
+
+        refresh_token_service = None
+        if self._token_service is not None:
+            refresh_token_service = RefreshTokenService(
+                token_service=self._token_service,
+                refresh_token_repo=self._refresh_token_repo,
+            )
 
         return AsyncAuthService(
             user_service=self._user_service,
             identity_repo=self._identity_repo,
             password_hasher=self._hasher,
             token_service=self._token_service,
+            refresh_token_service=refresh_token_service,
         )

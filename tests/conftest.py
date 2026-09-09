@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 import pytest_asyncio
 from httpx2 import ASGITransport
@@ -8,6 +10,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.pool import StaticPool
 
+from fastapi_auth_lib.repositories.memory.async_refresh_token import InMemoryAsyncRefreshTokenRepository
+from fastapi_auth_lib.services.session.refresh_token_service import RefreshTokenService
 from src.fastapi_auth_lib.core.app_builder import AppBuilder
 from src.fastapi_auth_lib.repositories.db_models import db_auth_identity  # noqa: F401
 from src.fastapi_auth_lib.repositories.db_models import db_user_profile  # noqa: F401
@@ -95,7 +99,11 @@ TEST_ISSUER = "test-issuer"
 
 @pytest_asyncio.fixture
 def token_service():
-    return JwtTokenService(secret=TEST_SECRET, issuer=TEST_ISSUER)
+    return JwtTokenService(
+        secret=TEST_SECRET,
+        issuer=TEST_ISSUER,
+        refresh_ttl=timedelta(hours=1),
+    )
 
 
 @pytest_asyncio.fixture
@@ -128,3 +136,13 @@ async def client(app):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
+
+
+@pytest_asyncio.fixture
+def refresh_token_repo():
+    return InMemoryAsyncRefreshTokenRepository()
+
+
+@pytest.fixture
+def refresh_service(token_service, refresh_token_repo):
+    return RefreshTokenService(token_service, refresh_token_repo)
