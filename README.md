@@ -54,6 +54,9 @@ For test application: [fastapi-auth-lib-react-test](https://github.com/zola8/fas
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+PyPi repository: [fastapi-auth-lib-zo](https://pypi.org/project/fastapi-auth-lib-zo/)
+(I had to change because of naming conventions.)
+
 ------
 
 > Hello everyone,
