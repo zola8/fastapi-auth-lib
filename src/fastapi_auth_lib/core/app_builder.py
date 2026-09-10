@@ -45,7 +45,7 @@ class AppBuilder:
 
     def __init__(self) -> None:
         self._title: str = "fastapi-auth-lib"
-        self._version: str = "0.1.7"
+        self._version: str = "0.2.0"
         self._api_prefix: str = "/api/v1"
         self._routers: list[tuple] = []  # (router, prefix, tags)
         self._exception_handlers: bool = True

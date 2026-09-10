@@ -32,13 +32,23 @@ pip install -r requirements-dev.txt
 
 ## Examples
 
-For examples see: [Examples](examples/README.md)
+For documentations see:
+
+- [Registration with Activation](examples/docs/Registration%20with%20Activation.md)
+- [Forgot Password](examples/docs/Forgot%20Password.md)
+- [Resend Activation](examples/docs/Resend%20Activation.md)
+- [Login](examples/docs/Login.md)
+- [Logout](examples/docs/Logout.md)
+
+For examples see the **/examples** folder.
 
 For test coverage, use:
 
 ```shell
 pytest --cov-reset --cov=src/fastapi_auth_lib --cov-report=html
 ```
+
+For test application: [fastapi-auth-lib-react-test](https://github.com/zola8/fastapi-auth-lib-react-test)
 
 ## License
 
