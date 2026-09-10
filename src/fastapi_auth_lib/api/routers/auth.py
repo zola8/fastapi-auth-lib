@@ -164,6 +164,7 @@ async def login_with_password(
     req: LoginWithPasswordRequest,
     auth_service: AuthServiceDep,
 ) -> TokenPairResponse:
+    # TODO replace this workflow with IdentityService?
     logger.debug("POST /auth/login/password")
 
     user = await auth_service.authenticate_with_password(

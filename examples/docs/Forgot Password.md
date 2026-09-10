@@ -47,7 +47,7 @@ The backend confirms the password change. The user is usually redirected to the 
 
 ```mermaid
 sequenceDiagram
-    participant User
+    actor User
     participant Frontend
     participant Backend
     participant EmailService

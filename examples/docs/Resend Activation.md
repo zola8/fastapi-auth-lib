@@ -27,7 +27,7 @@ The backend validates the new token, activates the account, and marks the token 
 
 ```mermaid
 sequenceDiagram
-    participant User
+    actor User
     participant Frontend
     participant Backend
     participant EmailService

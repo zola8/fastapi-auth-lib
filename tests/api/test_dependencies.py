@@ -4,8 +4,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from conftest import TEST_ISSUER
-from conftest import TEST_SECRET
 from src.fastapi_auth_lib.api.dependencies import get_auth_service
 from src.fastapi_auth_lib.api.dependencies import get_current_user
 from src.fastapi_auth_lib.api.dependencies import get_email_service
@@ -16,6 +14,8 @@ from src.fastapi_auth_lib.core.exceptions import PermissionDeniedException
 from src.fastapi_auth_lib.models.base import UserRole
 from src.fastapi_auth_lib.models.user import UserProfile
 
+TEST_SECRET = "test-secret-which-is-long-enough"
+TEST_ISSUER = "test-issuer"
 
 # ---------------------------------------------------------------------------
 # require_role

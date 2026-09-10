@@ -23,6 +23,7 @@ Features:
 ```shell
 pip install -r requirements.txt
 ```
+
 If you are a developer, install dev dependencies:
 
 ```shell
@@ -33,11 +34,26 @@ pip install -r requirements-dev.txt
 
 For examples see: [Examples](examples/README.md)
 
+For test coverage, use:
+
+```shell
+pytest --cov-reset --cov=src/fastapi_auth_lib --cov-report=html
+```
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ------
+
+> Hello everyone,
+>
+> I am Zoltán, the author of this authentication library. I know it's far from perfect and still lacks many features.
+> However, I wanted to create a demo - illustrating that the Pythonic approach can be just as straightforward as
+> using a Java Spring library.
+>
+> I hope you find it helpful. I'll stop here unless there's a request to continue.
+
 
 Made with ❤️ for the FastAPI community
 

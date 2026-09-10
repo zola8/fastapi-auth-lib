@@ -33,7 +33,7 @@ status to active, and logs the user in.
 
 ```mermaid
 sequenceDiagram
-    participant User
+    actor User
     participant Frontend
     participant Backend as FastAPI Backend
     participant Database
