@@ -15,6 +15,7 @@ from fastapi_auth_lib.services.session.refresh_token_service import RefreshToken
 from src.fastapi_auth_lib.core.app_builder import AppBuilder
 from src.fastapi_auth_lib.repositories.db_models import db_auth_identity  # noqa: F401
 from src.fastapi_auth_lib.repositories.db_models import db_user_profile  # noqa: F401
+from src.fastapi_auth_lib.repositories.db_models import db_refresh_token  # noqa: F401
 from src.fastapi_auth_lib.repositories.db_models.db_base import Base
 from src.fastapi_auth_lib.repositories.sql.async_auth_identity import SqlAsyncAuthIdentityRepository
 from src.fastapi_auth_lib.repositories.sql.async_refresh_token import SqlAsyncRefreshTokenRepository
@@ -107,18 +108,19 @@ def token_service():
 
 
 @pytest_asyncio.fixture
-def auth_service(user_service, auth_identity_repo, password_hasher, token_service):
+def auth_service(user_service, auth_identity_repo, password_hasher, token_service, refresh_service):
     return AsyncAuthService(
         user_service=user_service,
         identity_repo=auth_identity_repo,
         password_hasher=password_hasher,
         token_service=token_service,
+        refresh_token_service=refresh_service
     )
 
 
 @pytest.fixture
 def app():
-    app = (
+    return (
         AppBuilder()
         .with_in_memory_services()
         .with_jwt(secret=TEST_SECRET, issuer=TEST_ISSUER)
@@ -128,7 +130,22 @@ def app():
         .build()
     )
 
-    return app
+
+@pytest.fixture
+def app_with_seeded_users():
+    """App that already contains one admin and one regular user."""
+    return (
+        AppBuilder()
+        .with_in_memory_services()
+        .with_jwt(secret=TEST_SECRET, issuer=TEST_ISSUER)
+        .with_users([
+            {"email": "admin@test.com", "password": "Admin123!", "roles": ["admin"]},
+            {"email": "user@test.com", "password": "User1234!", "roles": ["user"]},
+        ])
+        .with_all_routers()
+        .with_exception_handlers()
+        .build()
+    )
 
 
 @pytest.fixture

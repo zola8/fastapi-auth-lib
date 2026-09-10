@@ -3,6 +3,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from fastapi_auth_lib.repositories.async_refresh_token import AsyncRefreshTokenRepository
 from fastapi_auth_lib.repositories.memory.async_refresh_token import InMemoryAsyncRefreshTokenRepository
 from fastapi_auth_lib.repositories.sql.async_refresh_token import SqlAsyncRefreshTokenRepository
 from fastapi_auth_lib.services.session.refresh_token_service import RefreshTokenService
@@ -66,8 +67,11 @@ class AuthServiceBuilder:
         self._refresh_token_repo = SqlAsyncRefreshTokenRepository(session)
         return self
 
+    def with_refresh_token_repo(self, refresh_token_repo: AsyncRefreshTokenRepository) -> "AuthServiceBuilder":
+        self._refresh_token_repo = refresh_token_repo
+        return self
+
     def with_token_service(self, token_service: TokenServiceProtocol) -> "AuthServiceBuilder":
-        """Inject any TokenServiceProtocol-compatible implementation."""
         self._token_service = token_service
         return self
 

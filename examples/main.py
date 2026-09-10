@@ -18,6 +18,18 @@ app = (
     .with_exception_handlers()
     .with_cors()
     .with_dummy_email()
+    .with_users([
+        {
+            "email": "admin@test.com",
+            "password": "admin123",
+            "roles": ["admin", "user"],
+        },
+        {
+            "email": "user@test.com",
+            "password": "aaaaaaaa",
+            "roles": ["user"],
+        },
+    ])
     .build()
 )
 

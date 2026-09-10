@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from datetime import timedelta
 from typing import Callable
@@ -5,12 +6,17 @@ from typing import Callable
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.fastapi_auth_lib.core.exception_handlers import register_exception_handlers
+from fastapi_auth_lib.models.base import UserRole
+from fastapi_auth_lib.models.base import UserStatus
+from fastapi_auth_lib.repositories.sql.async_refresh_token import SqlAsyncRefreshTokenRepository
+from fastapi_auth_lib.services.password_hasher.argon2_hasher import Argon2PasswordHasher
+from fastapi_auth_lib.services.token.jwt_token_service import DEFAULT_RESET_TTL
 from src.fastapi_auth_lib.api.routers.admin import router as admin_router
 from src.fastapi_auth_lib.api.routers.auth import router as auth_router
 from src.fastapi_auth_lib.api.routers.users import router as user_router
 from src.fastapi_auth_lib.core.database import create_tables
 from src.fastapi_auth_lib.core.database import dispose_engine
+from src.fastapi_auth_lib.core.exception_handlers import register_exception_handlers
 from src.fastapi_auth_lib.services.async_auth_service import AsyncAuthService
 from src.fastapi_auth_lib.services.async_user_service import AsyncUserService
 from src.fastapi_auth_lib.services.email.dummy_logger_email_service import DummyLoggerEmailService
@@ -50,6 +56,9 @@ class AppBuilder:
         self._jwt_config: dict | None = None
         self._sql_mode: bool = False
         self._email_service: EmailServiceProtocol | None = None
+        self._seed_users: list[dict] = []
+        self._user_service_factory: Callable | None = None
+        self._auth_service_factory: Callable | None = None
 
         # CORS configuration
         self._cors_enabled: bool = False
@@ -112,8 +121,7 @@ class AppBuilder:
     def with_in_memory_services(self) -> "AppBuilder":
         """Build and use in-memory services (the default)."""
         self._sql_mode = False
-        self._user_service = None
-        self._auth_service = None
+        self._build_in_memory_services()
         return self
 
     def with_sql_services(self) -> "AppBuilder":
@@ -124,6 +132,8 @@ class AppBuilder:
         self._sql_mode = True
         self._user_service = None
         self._auth_service = None
+        self._build_sql_factories()
+
         # TODO check password hasher with sql?
 
         # Wrap the original lifespan (with create tables + dispose engine)
@@ -164,6 +174,7 @@ class AppBuilder:
         access_ttl: timedelta = DEFAULT_ACCESS_TTL,
         refresh_ttl: timedelta = DEFAULT_REFRESH_TTL,
         activation_ttl: timedelta = DEFAULT_ACTIVATION_TTL,
+        reset_ttl: timedelta = DEFAULT_RESET_TTL,
     ) -> "AppBuilder":
         """Enable JWT tokens for the auth service (both in-memory and SQL modes)."""
         self._jwt_config = {
@@ -173,7 +184,17 @@ class AppBuilder:
             "access_ttl": access_ttl,
             "refresh_ttl": refresh_ttl,
             "activation_ttl": activation_ttl,
+            "reset_ttl": reset_ttl,
         }
+
+        # If in-memory services already built, rebuild to pick up JWT config
+        if not self._sql_mode and self._user_service is not None:
+            self._build_in_memory_services()
+
+        # If SQL mode, rebuild factories to pick up JWT config
+        if self._sql_mode:
+            self._build_sql_factories()
+
         return self
 
     # ------------------------------------------------------------------
@@ -243,21 +264,101 @@ class AppBuilder:
         return self.with_email_service(DummyLoggerEmailService())
 
     # ------------------------------------------------------------------
-    # Build
+    # Seed data (for development/testing)
     # ------------------------------------------------------------------
-    def build(self) -> FastAPI:
-        # In-memory: build services now
-        if not self._sql_mode and self._user_service is None:
-            user_service = UserServiceBuilder().build()
-            auth_builder = (
+    def with_users(self, users: list[dict]) -> "AppBuilder":
+        """
+        Seed initial users during build.
+
+        Each dict must have: email, password, roles (list[str]).
+        Optional: username (defaults to email prefix).
+        Users with status='active' are auto-activated.
+
+        Usage:
+            .with_users([
+                {"email": "admin@test.com", "password": "Admin123!", "roles": ["admin"]},
+                {"email": "user@test.com",  "password": "User1234!", "roles": ["user"]},
+            ])
+        """
+        self._seed_users = users
+        return self
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _run_async(coro):
+        """Execute an async coroutine from sync context."""
+        return asyncio.run(coro)
+
+    def _seed_in_memory_users(self) -> None:
+        """Register and configure seed users using the in-memory services."""
+
+        async def _do_seed():
+            for u in self._seed_users:
+                user = await self._auth_service.register(
+                    email=u["email"],
+                    password=u["password"],
+                )
+                user.roles = [UserRole(r) for r in u.get("roles", ["user"])]
+                if u.get("status", "active") == "active":
+                    user.status = UserStatus.ACTIVE
+                await self._user_service.update_user(user.user_id, user)
+
+        self._run_async(_do_seed())
+
+    def _build_in_memory_services(self) -> None:
+        """Construct user + auth services (singleton) for in-memory mode."""
+        user_service = UserServiceBuilder().build()
+
+        auth_builder = (
+            AuthServiceBuilder()
+            .with_user_service(user_service)
+            .with_in_memory_identity_repo()
+            .with_password_hasher(PlaintextHasher())
+        )
+        if self._jwt_config is not None:
+            auth_builder = auth_builder.with_jwt(**self._jwt_config)
+
+        self._user_service = user_service
+        self._auth_service = auth_builder.build()
+
+    def _build_sql_factories(self) -> None:
+        """
+        Build factory closures that construct services from a session.
+        Stored on app.state so dependencies.py just calls them per-request.
+        """
+        jwt_config = self._jwt_config  # capture current config
+
+        def user_factory(session):
+            return UserServiceBuilder().with_sql_session(session).build()
+
+        def auth_factory(session, user_service):
+            refresh_repo = SqlAsyncRefreshTokenRepository(session)
+            builder = (
                 AuthServiceBuilder()
                 .with_user_service(user_service)
-                .with_password_hasher(PlaintextHasher())
+                .with_sql_session(session)
+                .with_password_hasher(Argon2PasswordHasher())
+                .with_refresh_token_repo(refresh_repo)
             )
-            if self._jwt_config is not None:
-                auth_builder = auth_builder.with_jwt(**self._jwt_config)
-            self._user_service = user_service
-            self._auth_service = auth_builder.build()
+            if jwt_config is not None:
+                builder = builder.with_jwt(**jwt_config)
+            return builder.build()
+
+        self._user_service_factory = user_factory
+        self._auth_service_factory = auth_factory
+
+    # ------------------------------------------------------------------
+    # Build
+    # ------------------------------------------------------------------
+
+    def build(self) -> FastAPI:
+        if not self._sql_mode and self._user_service is None:
+            self._build_in_memory_services()
+
+        if self._seed_users and not self._sql_mode:
+            self._seed_in_memory_users()
 
         app = FastAPI(
             title=self._title,
@@ -265,7 +366,6 @@ class AppBuilder:
             lifespan=self._lifespan,
         )
 
-        # Apply CORS middleware
         if self._cors_enabled:
             app.add_middleware(
                 CORSMiddleware,
@@ -275,11 +375,15 @@ class AppBuilder:
                 allow_headers=self._cors_headers,
             )
 
-        # Store services on app.state
+        # Singletons (in-memory) or None (SQL)
         app.state.user_service = self._user_service
         app.state.auth_service = self._auth_service
         app.state.jwt_config = self._jwt_config
         app.state.email_service = self._email_service
+
+        # Factories (SQL) or None (in-memory)
+        app.state.user_service_factory = self._user_service_factory
+        app.state.auth_service_factory = self._auth_service_factory
 
         if self._exception_handlers:
             register_exception_handlers(app)
